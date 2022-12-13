@@ -1,0 +1,13 @@
+param,value,description
+eP,1010,"""environmental pressure [hPa]"""
+rMaxModel,1,"""TC radius of maximum winds model c('AP21'=0,'MK14'=1,'WR04'=2,'VW08'=3,'TW08'=4), see function rMax_modelsR()"""
+vMaxModel,1,"""TC maximum velocity model c('AP21'=0,'MK14'=1,'WR04'=2,'VW08'=3,'AH77'=4), see function vMax_modelsR()"""
+betaModel,1,"""TC beta model c('AP21'=0,'MK14'=1,'WR04'=2,'VW08'=3,'AH77'=4), see function beta_modelsR()"""
+pressureProfileModel,0,"""TC pressure profile c('Holland'=0,'McConochie'=2)"""
+windProfileModel,2,"""TC wind profile c('Holland'=0,'McConochie'=2)"""
+windVortexModel,2,"""TC wind vortex model c('Kepert'=0,'Hubbert'=1,'McConochie'=2,'Jelesnianski'=4)"""
+g,9.81,"""acceleration due to gravity [m/s2]"""
+rhoa,1.14,"""air density [kg/m3]"""
+WindBias,-4.25,"""bias correction added to winds [m/s]"""
+Decay_a1,0.617,"""exponential wind decay inland constant [-]"""
+Decay_a2,0.383,"""exponential wind decay inland exponent [-]"""
