@@ -4,7 +4,7 @@
 \alias{beta_modelsR}
 \title{Compute the Exponential TC beta Profile-Curvature Parameter}
 \usage{
-beta_modelsR(betaModel, vMax, rMax, cP, eP, vFm, TClat, dPdt)
+beta_modelsR(betaModel, vMax, rMax, cPs, eP, vFms, TClats, dPdt, rho = 1.15)
 }
 \arguments{
 \item{betaModel}{0=Holland (2008),1=Powell (2005),2=Willoughby & Rahn (2004),3=Vickery & Wadhera (2008),4=Hubbert (1991)}
@@ -13,15 +13,17 @@ beta_modelsR(betaModel, vMax, rMax, cP, eP, vFm, TClat, dPdt)
 
 \item{rMax}{radius of maximum winds (km). see \code{rMax_modelsR}}
 
-\item{cP}{Tropical cyclone central pressure (hPa)}
+\item{cPs}{Tropical cyclone central pressure (hPa)}
 
 \item{eP}{Background environmental pressure (hPa)}
 
-\item{vFm}{Forward speed of the storm m/s}
+\item{vFms}{Forward speed of the storm m/s}
 
-\item{TClat}{Tropical cyclone central latitude}
+\item{TClats}{Tropical cyclone central latitude}
 
 \item{dPdt}{rate of change in central pressure over time, hPa per hour from Holland 2008}
+
+\item{rho}{density of air}
 }
 \value{
 exponential beta parameter
@@ -30,5 +32,5 @@ exponential beta parameter
 Compute the Exponential TC beta Profile-Curvature Parameter
 }
 \examples{
-beta_modelsR(0,10,960,1013,3,-15,1)
+beta_modelsR(0,10,10,960,1013,3,-15,1)
 }

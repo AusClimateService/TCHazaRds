@@ -26,7 +26,7 @@ suppressPackageStartupMessages(require(terra))       # spatial analysis
 suppressPackageStartupMessages(require(rasterVis))   # enhanced raster visualization https://oscarperpinan.github.io/rastervis/
 suppressPackageStartupMessages(require(sp))          # spatial methods and plotting
 suppressPackageStartupMessages(require(knitr))       # formatted table
-suppressPackageStartupMessages(require(raster))       # convert for raster plots
+suppressPackageStartupMessages(require(raster))      # convert for raster plots
 
 ```
 

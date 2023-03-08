@@ -16,7 +16,7 @@ vMax_modelsR(
 )
 }
 \arguments{
-\item{vMaxModel}{0=Holland (1980),1=Holland (2008),2=Willoughby & Rahn (2004).3=Vickery & Wadhera (2008),4=Atkinson and Holliday (1977)}
+\item{vMaxModel}{0=Arthur (1980),1=Holland (2008),2=Willoughby & Rahn (2004).3=Vickery & Wadhera (2008),4=Atkinson and Holliday (1977)}
 
 \item{cPs}{Tropical cyclone central pressure (hPa)}
 
@@ -39,5 +39,5 @@ maximum wind speed m/s.
 Compute the Tropical Cyclone Maximum Wind Speeds
 }
 \examples{
-vMax_modelsR(vMaxModel=1,cPs=950,eP=1010,vFm = 1,TClats = -14,dPdt = .1)
+vMax_modelsR(vMaxModel=1,cPs=950,eP=1010,vFms = 1,TClats = -14,dPdt = .1)
 }

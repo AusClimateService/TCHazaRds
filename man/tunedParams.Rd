@@ -23,5 +23,6 @@ Update Parameter List to Calibrated Values
 }
 \examples{
 paramsTable <- read.csv(system.file("extdata/tuningParams/defult_params.csv",package = "TCHazaRds"))
+
 tunedParams(paramsTable)
 }

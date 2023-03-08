@@ -8,6 +8,7 @@
 #'
 #' @examples
 #' paramsTable <- read.csv(system.file("extdata/tuningParams/defult_params.csv",package = "TCHazaRds"))
+#'
 #' tunedParams(paramsTable)
 tunedParams = function(paramsTable,infile = system.file("extdata/tuningParams/QLD_modelSummaryTable.csv",package = "TCHazaRds")){
   params <- array(paramsTable$value,dim = c(1,length(paramsTable$value)))
@@ -15,16 +16,12 @@ tunedParams = function(paramsTable,infile = system.file("extdata/tuningParams/QL
   params <- data.frame(params)
   if(with(params,rMaxModel != vMaxModel | rMaxModel !=betaModel)) stop("Along track models (beta, rMax, vMax) must have the same value")
   tunedvalues <- utils::read.csv(infile)
-  tunedvalues <- tunedvalues[tunedvalues$simulation == "BiasAndLandCorrect",]
+  tunedvalues <- tunedvalues[tunedvalues$simulation == "DecayCorrect",]
   vmods = c("Kepert","Hubbert","McConochie")
   tunedvalues = tunedvalues[tunedvalues$Dataset == vmods[params$windVortexModel+1] & tunedvalues$param_mod == params$rMaxModel,]
-  #params$WindBias = tunedvalues$biasCorrect
-  #params$Decay_a1 = tunedvalues$a1
-  #params$Decay_a2 = tunedvalues$a2
-  paramsTable[which(paramsTable[,1] == "WindBias"),]$value <- tunedvalues$biasCorrect
   paramsTable[which(paramsTable[,1] == "Decay_a1"),]$value <- tunedvalues$a1
   paramsTable[which(paramsTable[,1] == "Decay_a2"),]$value <- tunedvalues$a2
-
+  paramsTable[which(paramsTable[,1] == "Decay_a3"),]$value <- tunedvalues$a3
   return(paramsTable)
 }
 
@@ -292,15 +289,15 @@ TCHazaRdsWindTimeSereies = function(outdate=NULL,GEO_land=NULL,TC,paramsTable){
   Dw[Dw < 0 & !is.na(Dw)] <- 360+Dw[Dw < 0 & !is.na(Dw)]
   Dw[Dw > 360 & !is.na(Dw)] <- Dw[Dw > 360 & !is.na(Dw)]-360
 
-  a1 = params$Decay_a1;a2 = params$Decay_a1
   decay <- 1
-  if(a1 != 0){
-    decay = a1 + (1-a1)*exp(-GEO_land$inlandD/(a2*1000))
+  a = c(params$Decay_a1,params$Decay_a2,params$Decay_a3)
+  if(a[1] != 0){
+    decay = inlandWindDecay(GEO_land$inlandD/1000,a)
     decay[is.na(decay)] <- 1
   }
 
   #bias correct winds and correct for surface roughness
-  Sw <- (sqrt(Uw^2+Vw^2) + params$WindBias)*decay
+  Sw <- sqrt(Uw^2+Vw^2)*decay
 
   Uw <- cos(Va) * Sw
   Vw <- sin(Va) * Sw
@@ -439,11 +436,15 @@ TCHazaRdsWindField = function(GEO_land,TC,paramsTable){
   s = which(Dwv > 360 & !is.na(Dwv))
   if( length(s > 0) ) Dw[s] = Dw[s]-360
 
-  a1 = params$Decay_a1;a2 = params$Decay_a1
-  decay = a1 + (1-a1)*exp(-GEO_land$inlandD/(a2*1000));decay[is.na(decay)] <- 1
+  decay <- 1
+  a = c(params$Decay_a1,params$Decay_a2,params$Decay_a3)
+  if(a[1] != 0){
+    decay = inlandWindDecay(GEO_land$inlandD/1000,a)
+    decay[is.na(decay)] <- 1
+  }
 
   #bias correct winds and correct for surface roughness
-  Sw = (sqrt(Uw^2+Vw^2) + params$WindBias)*decay
+  Sw = sqrt(Uw^2+Vw^2)*decay
 
   Uw = cos(Va) * Sw
   Vw = sin(Va) * Sw
@@ -607,8 +608,8 @@ readncs = function(infile){
 #'
 #' @examples rMax_modelsR(0,-14,950,1013,200,0,0,1.15)
 rMax_modelsR <- function(rMaxModel,TClats,cPs,eP,R175ms=150,dPdt=NULL,vFms=NULL,rho=1.15){
-  dPs <- (eP-cPs)
-  dPs[dPs < 1] = 1
+  dP <- (eP-cPs)
+  dP[dP < 1] = 1
   #not in TCRM
   #0: Powell Soukup et al (2005) updated to Arthur 2021
   #1: McInnes et al 2014 (Kossin, pers. comm. October, 2010).
@@ -616,19 +617,37 @@ rMax_modelsR <- function(rMaxModel,TClats,cPs,eP,R175ms=150,dPdt=NULL,vFms=NULL,
   #3: Vickery & Wadhera (2008) eq 11
   #4: Takagi & Wu (2016)
   #5: Chavas & Knaff (2022)
-  if(rMaxModel==0) rMaxs <- exp(3.543-0.00378*dPs+0.813*exp(-0.0022*(dPs)^2)+0.00157*(TClats^2) ) #+ rnorm(1,0,0.335)#Arthur 2021 eq 8
+  if(rMaxModel==0) {
+    #see https://github.com/GeoscienceAustralia/tcha/blob/6e6de8df2b3fd5c9287d060f1f7f1d4ff63e87a7/wind-radii/rmax_fit.py#L205
+    rMaxs <- exp(3.543-0.00378*dP+0.813*exp(-0.0022*(dP)^2)+0.00157*(TClats^2) ) #+ rnorm(1,0,0.335)#Arthur 2021 eq 8
+  }
   if(rMaxModel==1) rMaxs <- exp(-3.5115+0.0068*cPs+0.0264*abs(TClats)) #McInnes et al 2014 (Kossin, pers. comm. October, 2010)
   if(rMaxModel==2) {
-    vMax <- 0.6252 * sqrt(dPs) #Equation 5 is 2.1*sqrt(dP)?
-    rMaxs <- 51.6*exp(-0.223*vMax+0.0281*abs(TClats))
+    #the WR04 Vmax and Rmax equations needed to be refactored to solve for b
+    #vMax = sqrt(beta)*sqrt(dP*100/(exp(1)*rho))
+    #rMaxs <- 51.6*exp(-0.0223*vMax+0.0281*abs(TClats))
+    #beta = 1.0036 + 0.0173 * vMax - 0.0313 * log(rMax) + 0.0087 * abs(TClats)
+    #beta = 1.0036 + 0.0173 * vMax - 0.0313 * (log(51.6) -0.0223*vMax+0.0281*abs(TClats)) + 0.0087 * abs(TClats) #substitute rMax
+    #beta = 1.0036 + 0.0173 * sqrt(beta)*sqrt(dP*100/(exp(1)*rho)) - 0.0313 * (log(51.6) -0.0223*sqrt(beta)*sqrt(dP*100/(exp(1)*rho))+0.0281*abs(TClats)) + 0.0087 * abs(TClats) #substitute vMax
+    #beta - 0.0173 * sqrt(beta)*sqrt(dP*100/(exp(1)*rho)) - 0.0313 * (-0.0223*sqrt(beta)*sqrt(dP*100/(exp(1)*rho))+0.0281*abs(TClats)) = 1.0036  - 0.0313 * log(51.6)  + 0.0087 * abs(TClats) #write in terms of beta
+    #beta -a*sqrt(beta) = b
+    a <- 0.0173*sqrt(dP*100/(exp(1)*rho))+0.0313 * (-0.0223*sqrt(dP*100/(exp(1)*rho))+0.0281*abs(TClats))
+    b <- 1.0036  - 0.0313 * log(51.6)  + 0.0087 * abs(TClats)
+    #x-a*sqrt(x) = b
+    #https://www.wolframalpha.com/input?i=x-+a*sqrt%28x%29%3Db
+    beta <- (1/2)*(a^2+sqrt(a^4+4*a^2*b)+2*b)
+    beta[beta < 0.8] = 0.8
+    beta[beta > 1.9] = 1.9
+    vMax <- sqrt(beta*dP*100/(exp(1)*rho))
+    rMaxs <- 51.6*exp(-0.0223*vMax+0.0281*abs(TClats))
   }
-  if(rMaxModel==3) rMaxs <- exp(3.015 -6.291e-5*dPs^2+0.0337*abs(TClats)) #Vickery Wadhera 2008 eq 11
+  if(rMaxModel==3) rMaxs <- exp(3.015 -6.291e-5*dP^2+0.0337*abs(TClats)) #Vickery Wadhera 2008 eq 11
   if(rMaxModel==4) rMaxs <- 0.676*cPs-578 #Takagi Wu 2016 Figure 3
   if(rMaxModel==5) {
-    x = 0.6*(1-dPs/215)
-    bs = -4.4e-5*dPs^2+0.01*dPs+0.03*dPdt-0.014*abs(TClats)+0.15*vFms^x+1
-    vMax =  sqrt(abs(100*bs/(rho*exp(1))*dPs))  #Holland 2008 model "A Revised Hurricane Pressure – Wind Model"  Equation 11 !!!100 time larger for Holland 2010 eq 8!!!
-    vMax <- 0.6252 * sqrt(dPs*100)
+    x = 0.6*(1-dP/215)
+    bs = -4.4e-5*dP^2+0.01*dP+0.03*dPdt-0.014*abs(TClats)+0.15*vFms^x+1
+    vMax =  sqrt(abs(100*bs/(rho*exp(1))*dP))  #Holland 2008 model "A Revised Hurricane Pressure – Wind Model"  Equation 11 !!!100 time larger for Holland 2010 eq 8!!!
+    vMax <- 0.6252 * sqrt(dP*100)
     f <- 2*7.292e-5 *sin(abs(TClats*pi/180))
     ruser_m_vec = R175ms*1000 #m mean radius of 34-kt wind
     Muser_vec <- ruser_m_vec*17.491 + 0.5*abs(f)*ruser_m_vec^2 #Calculate Muser (Eq 2 of CK22)
@@ -650,7 +669,7 @@ rMax_modelsR <- function(rMaxModel,TClats,cPs,eP,R175ms=150,dPdt=NULL,vFms=NULL,
 
 #' Compute the Tropical Cyclone Maximum Wind Speeds
 #'
-#' @param vMaxModel 0=Holland (1980),1=Holland (2008),2=Willoughby & Rahn (2004).3=Vickery & Wadhera (2008),4=Atkinson and Holliday (1977)
+#' @param vMaxModel 0=Arthur (1980),1=Holland (2008),2=Willoughby & Rahn (2004).3=Vickery & Wadhera (2008),4=Atkinson and Holliday (1977)
 #' @param cPs Tropical cyclone central pressure (hPa)
 #' @param eP Background environmental pressure (hPa)
 #' @param vFms Forward speed of the storm m/s
@@ -663,35 +682,47 @@ rMax_modelsR <- function(rMaxModel,TClats,cPs,eP,R175ms=150,dPdt=NULL,vFms=NULL,
 #' @export
 #'
 #' @examples
-#' vMax_modelsR(vMaxModel=1,cPs=950,eP=1010,vFm = 1,TClats = -14,dPdt = .1)
+#' vMax_modelsR(vMaxModel=1,cPs=950,eP=1010,vFms = 1,TClats = -14,dPdt = .1)
 vMax_modelsR <- function(vMaxModel,cPs,eP,vFms=NULL,TClats=NULL,dPdt=NULL,beta=1.3,rho=1.15){
 	#Calculate max wind speed in model the beta parameter is only used in Holland 08, and there it equals 1.3
 	# vMaxModel is the type of model used :
-	#0: Holland (1980) defult? https://github.com/GeoscienceAustralia/tcrm/blob/1916233f7dfdecf6a1b5f5b0d89f3eb1d164bd3e/wind/vmax.py#L58
+	#0: Arthur 2021 Willoughby & Rahn(2004) defult? https://github.com/GeoscienceAustralia/tcrm/blob/1916233f7dfdecf6a1b5f5b0d89f3eb1d164bd3e/wind/vmax.py#L96
   #1: Holland (2008)
-  #2: Willoughby & Rahn(2004) defult? https://github.com/GeoscienceAustralia/tcrm/blob/1916233f7dfdecf6a1b5f5b0d89f3eb1d164bd3e/wind/vmax.py#L96
+  #2: illoughby & Rahn (2004) via the beta parameter
   #3: Vickery & Wadhera (2008)
   #4: Atkinson and Holliday(1977)
 	dP = eP - cPs;
 	dP[dP < 1] = 1 #needs to be at least lower than the background
-	if (vMaxModel == 0) {
-	  rMax <- exp(3.543-0.00378*(dP)+0.813*exp(-0.0022*(dP)^2)+0.00157*(TClats^2))
-    beta = 1.881093 - 0.010917 * abs(TClats) - 0.005567 * rMax #Powell (2005)
-    beta[beta < 0.8] = 0.8
-    beta[beta > 2.2] = 2.2
-	  vMax = sqrt(beta * dP * 100 / (exp(1.0) * rho))		#Holland 1980 !dP in Pa no hPa so * 100
-	}
+	if(vMaxModel == 0) vMax = 0.6252 * sqrt(dP*100)
+
 	if (vMaxModel == 1){
 	  x = 0.6*(1-dP/215)
 	  bs = -4.4e-5*dP^2+0.01*dP+0.03*dPdt-0.014*abs(TClats)+0.15*vFms^x+1
 	  vMax =  sqrt(abs(100*bs/(rho*exp(1))*dP))  #Holland 2008 model "A Revised Hurricane Pressure – Wind Model"  Equation 11 !!!100 time larger for Holland 2010 eq 8!!!
 	}
-	if(vMaxModel == 2) vMax = 0.6252 * sqrt(dP*100) #Equation 5 is 2.1*sqrt(dP)? Willoughby & Rahn (2004), Parametric Representation of the Primary !dP in Pa no hPa so * 100
-
+	if (vMaxModel == 2) {
+	  #the WR04 Vmax and Rmax equations needed to be refactored to solve for b
+	  #vMax = sqrt(beta)*sqrt(dP*100/(exp(1)*rho))
+	  #rMaxs <- 51.6*exp(-0.0223*vMax+0.0281*abs(TClats))
+	  #beta = 1.0036 + 0.0173 * vMax - 0.0313 * log(rMax) + 0.0087 * abs(TClats)
+	  #beta = 1.0036 + 0.0173 * vMax - 0.0313 * (log(51.6) -0.0223*vMax+0.0281*abs(TClats)) + 0.0087 * abs(TClats) #substitute rMax
+	  #beta = 1.0036 + 0.0173 * sqrt(beta)*sqrt(dP*100/(exp(1)*rho)) - 0.0313 * (log(51.6) -0.0223*sqrt(beta)*sqrt(dP*100/(exp(1)*rho))+0.0281*abs(TClats)) + 0.0087 * abs(TClats) #substitute vMax
+	  #beta - 0.0173 * sqrt(beta)*sqrt(dP*100/(exp(1)*rho)) - 0.0313 * (-0.0223*sqrt(beta)*sqrt(dP*100/(exp(1)*rho))+0.0281*abs(TClats)) = 1.0036  - 0.0313 * log(51.6)  + 0.0087 * abs(TClats) #write in terms of beta
+	  #beta -a*sqrt(beta) = b
+	  a <- 0.0173*sqrt(dP*100/(exp(1)*rho))+0.0313 * (-0.0223*sqrt(dP*100/(exp(1)*rho))+0.0281*abs(TClats))
+	  b <- 1.0036  - 0.0313 * log(51.6)  + 0.0087 * abs(TClats)
+	  #x-a*sqrt(x) = b
+	  #https://www.wolframalpha.com/input?i=x-+a*sqrt%28x%29%3Db
+	  beta <- (1/2)*(a^2+sqrt(a^4+4*a^2*b)+2*b)
+	  beta[beta < 0.8] = 0.8
+	  beta[beta > 1.9] = 1.9
+	  vMax <- sqrt(beta*dP*100/(exp(1)*rho))
+	  #rMaxs <- 51.6*exp(-0.0223*vMax+0.0281*abs(TClats))
+	 }
 	if(vMaxModel == 3){ #Vickery and Wadhera (2008)
 	  rMaxs <- exp(3.015 -6.291e-5*dP^2+0.0337*abs(TClats)) #eq 11
     TClatrad <- TClats*pi / 180.0;wearth <- pi*(1.0 / 24.0) / 1800.0;  f <- 2.0*wearth*sin(TClatrad)
-    beta = 1.833-0.326*sqrt(abs(f)*rMaxs) #eq 23
+    beta = 1.833-0.326*sqrt(abs(f)*rMaxs*1000) #eq 23 rMax is in units [m] not km
     vMax = sqrt(beta*dP*100/(exp(1)*rho)) #eq 4  !dP in Pa no hPa so * 100
   }
 	if (vMaxModel == 4) vMax = (3.04 * ((1010.0 - cPs) / 100.0)^ 0.644)	#Atkinson and Holliday(1977), *Tropical Cyclone Minimum SeaLevel Pressure Maximum Sustained Wind Relationship for		#Maximum 10m, 1 - minute wind speed.Uses ``pEnv`` as 1010 hPa.
@@ -704,44 +735,76 @@ vMax_modelsR <- function(vMaxModel,cPs,eP,vFms=NULL,TClats=NULL,dPdt=NULL,beta=1
 #' @param betaModel 0=Holland (2008),1=Powell (2005),2=Willoughby & Rahn (2004),3=Vickery & Wadhera (2008),4=Hubbert (1991)
 #' @param vMax maximum wind speed m/s. see \code{vMax_modelsR}
 #' @param rMax radius of maximum winds (km). see \code{rMax_modelsR}
-#' @param cP Tropical cyclone central pressure (hPa)
+#' @param cPs Tropical cyclone central pressure (hPa)
 #' @param eP Background environmental pressure (hPa)
-#' @param vFm Forward speed of the storm m/s
-#' @param TClat Tropical cyclone central latitude
+#' @param vFms Forward speed of the storm m/s
+#' @param TClats Tropical cyclone central latitude
 #' @param dPdt rate of change in central pressure over time, hPa per hour from Holland 2008
+#' @param rho density of air
 #'
 #' @return exponential beta parameter
 #' @export
 #'
-#' @examples beta_modelsR(0,10,960,1013,3,-15,1)
-beta_modelsR = function(betaModel,vMax,rMax,cP, eP, vFm,TClat,dPdt){
+#' @examples beta_modelsR(0,10,10,960,1013,3,-15,1)
+beta_modelsR = function(betaModel,vMax,rMax,cPs, eP, vFms,TClats,dPdt,rho=1.15){
   #0: Powell  et al (2005) see Arthur 2021
   #1: Holland (2008)
   #2: Willoughby & Rahn(2004) defult? https://github.com/GeoscienceAustralia/tcrm/blob/1916233f7dfdecf6a1b5f5b0d89f3eb1d164bd3e/wind/vmax.py#L96
   #3: Vickery & Wadhera (2008)
   #4: Hubbert (1991)
-  dP <- (eP-cP)
+  dP <- (eP-cPs)
   dP[dP < 1] = 1
   if(betaModel == 0){
-    beta = 1.881093 - 0.010917 * abs(TClat) - 0.005567 * rMax #Powell (2005)
+    beta = 1.881093 - 0.010917 * abs(TClats) - 0.005567 * rMax #Powell (2005)
     beta[beta < 0.8] = 0.8
-    beta[beta > 2.2] = 2.2
+    beta[beta > 1.9] = 1.9
   }
   if(betaModel == 1){
 	  x = 0.6*(1-dP/215)
-	  bs = -4.4e-5*dP^2+0.01*dP+0.03*dPdt-0.014*abs(TClat)+0.15*vFm^x+1
+	  bs = -4.4e-5*dP^2+0.01*dP+0.03*dPdt-0.014*abs(TClats)+0.15*vFms^x+1
     beta = bs #Holland (2008) #cyclone08v2.for beta = 1.6bs
   }
-  if(betaModel == 2) {
-    beta = (1.0036 + 0.0173 * vMax - 0.0313 * log(rMax) + 0.0087 * abs(TClat)) #Willoughby & Rahn (2004) !!!rMax/1000 https://github.com/GeoscienceAustralia/tcrm/blob/1916233f7dfdecf6a1b5f5b0d89f3eb1d164bd3e/wind/windmodels.py#L457
+  if (betaModel == 2) {
+    #the WR04 Vmax and Rmax equations needed to be refactored to solve for b
+    #vMax = sqrt(beta)*sqrt(dP*100/(exp(1)*rho))
+    #rMaxs <- 51.6*exp(-0.0223*vMax+0.0281*abs(TClats))
+    #beta = 1.0036 + 0.0173 * vMax - 0.0313 * log(rMaxs) + 0.0087 * abs(TClats)
+    #beta = 1.0036 + 0.0173 * vMax - 0.0313 * (log(51.6) -0.0223*vMax+0.0281*abs(TClats)) + 0.0087 * abs(TClats) #substitute rMax
+    #beta = 1.0036 + 0.0173 * sqrt(beta)*sqrt(dP*100/(exp(1)*rho)) - 0.0313 * (log(51.6) -0.0223*sqrt(beta)*sqrt(dP*100/(exp(1)*rho))+0.0281*abs(TClats)) + 0.0087 * abs(TClats) #substitute vMax
+    #beta - 0.0173 * sqrt(beta)*sqrt(dP*100/(exp(1)*rho)) - 0.0313 * (-0.0223*sqrt(beta)*sqrt(dP*100/(exp(1)*rho))+0.0281*abs(TClats)) = 1.0036  - 0.0313 * log(51.6)  + 0.0087 * abs(TClats) #write in terms of beta
+    #beta -a*sqrt(beta) = b
+    a <- 0.0173 * sqrt(dP*100/(exp(1)*rho))+0.0313 * (-0.0223*sqrt(dP*100/(exp(1)*rho))+0.0281*abs(TClats))
+    b <- 1.0036  - 0.0313 * log(51.6)  + 0.0087 * abs(TClats)
+    #x-a*sqrt(x) = b
+    #https://www.wolframalpha.com/input?i=x-+a*sqrt%28x%29%3Db
+    beta <- (1/2)*(a^2+sqrt(a^4+4*a^2*b)+2*b)
     beta[beta < 0.8] = 0.8
-    beta[beta > 2.2] = 2.2
+    beta[beta > 1.9] = 1.9
+    #vMax <- sqrt(beta*dP*100/(exp(1)*rho))
+    #rMaxs <- 51.6*exp(-0.0223*vMax+0.0281*abs(TClats))
   }
   if(betaModel == 3){
-    TClatrad <- TClat*pi / 180.0;wearth <- pi*(1.0 / 24.0) / 1800.0;  f <- 2.0*wearth*sin(TClatrad)
-    beta = 1.833-0.326*sqrt(abs(f)*rMax) #Vickery and Wadhera (2008)
+    TClatrad <- TClats*pi / 180.0;wearth <- pi*(1.0 / 24.0) / 1800.0;  f <- 2.0*wearth*sin(TClatrad)
+    beta = 1.833-0.326*sqrt(abs(f)*rMax*1000) #Vickery and Wadhera (2008) equ 23 rMax is in units [m] not km
   }
-  if(betaModel == 4) beta = 1.5 + (980-cP)/120 #Hubbert (1991)
+  if(betaModel == 4) beta = 1.5 + (980-cPs)/120 #Hubbert (1991)
   return(beta)
+}
+
+
+#' Reduce Winds Overland
+#'
+#' @param d inland distance in km
+#' @param a three parameter of decay model a1,a2,a3
+#'
+#' @return a reduction factor Km
+#' @export
+#'
+#' @examples
+#' inlandWindDecay(10)
+inlandWindDecay = function(d,a = c(0.66,1,0.4)){
+  d[d < 0] = 0
+  f = a[1]+a[2]*(1-a[1]/a[2])*exp(-d/a[3])
+  return(f)
 }
 
