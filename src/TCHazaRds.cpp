@@ -19,10 +19,10 @@ NumericMatrix RdistPi(float Gridlon, float Gridlat, NumericVector TClon, Numeric
   // Haversine formula constants
   const float Rearth = 6372797.560856f;
   const float pi = 3.141592f;
-
+  const float piOn180 = pi / 180;
   // Convert latitude and longitude to radians
-  float lat2 = Gridlat * pi / 180.0f;
-  float lon2 = Gridlon * pi / 180.0f;
+  float lat2 = Gridlat * piOn180;
+  float lon2 = Gridlon * piOn180;
 
   // Vector to store results
   int n = TClon.size();
@@ -33,12 +33,12 @@ NumericMatrix RdistPi(float Gridlon, float Gridlat, NumericVector TClon, Numeric
   float sin_lat2 = sinf(lat2);
 
   for (int i = 0; i < n; i++) {
-    float lat1 = TClat[i] * pi / 180.0f;
-    float lon1 = TClon[i] * pi / 180.0f;
+    float lat1 = TClat[i] * piOn180;
+    float lon1 = TClon[i] * piOn180;
 
     // Calculate differences in latitude and longitude
-    float dlat = (lat2 - lat1);
-    float dlon = (lon2 - lon1);
+    float dlat = lat2 - lat1;
+    float dlon = lon2 - lon1;
 
     // Haversine formula
     float a = sinf(dlat / 2.0f) * sinf(dlat / 2.0f) + cosf(lat1) * cos_lat2 * sinf(dlon / 2.0f) * sinf(dlon / 2.0f);
@@ -48,11 +48,12 @@ NumericMatrix RdistPi(float Gridlon, float Gridlat, NumericVector TClon, Numeric
     // Calculate the bearing (direction)
     float x = sinf(dlon) * cos_lat2;
     float y = cosf(lat1) * sin_lat2 - sinf(lat1) * cos_lat2 * cosf(dlon);
-    Rlam(i, 1) = atan2f(y, x) * 180.0f / pi;
+    Rlam(i, 1) = atan2f(y, x) / piOn180;
   }
 
   return Rlam;
 }
+
 //' @title Jelesnianski Wind Profile Time Series
 //' @description wind profile time series at a grid point
 //' @param f single coriolis parameter at the centre of TC in hz
@@ -792,6 +793,10 @@ NumericMatrix Rdist(NumericVector Gridlon, NumericVector Gridlat, float TClon, f
   float lat1 = TClat * piOn180;
   float lon1 = TClon * piOn180;
 
+  float cos_lat1 = cosf(lat1);
+  float sin_lat1 = sinf(lat1);
+
+
   for(int i = 0;i < n; i++){
     float lat2 = Gridlat[i] * piOn180;
     float lon2 = Gridlon[i] * piOn180;
@@ -799,13 +804,15 @@ NumericMatrix Rdist(NumericVector Gridlon, NumericVector Gridlat, float TClon, f
     float dlat = lat2 - lat1;
     float dlon = lon2 - lon1;
 
-    float a = sinf(dlat / 2.0f)*sinf(dlat / 2.0f) + cosf(lat1)*cosf(lat2)*sinf(dlon / 2.0f)*sinf(dlon / 2.0f);
+    float cos_lat2 = cosf(lat2);
+
+    float a = sinf(dlat / 2.0f) * sinf(dlat / 2.0f) + cos_lat1 * cos_lat2 * sinf(dlon / 2.0f) * sinf(dlon / 2.0f);
     float c = 2.0f * atan2f(sqrtf(a), sqrtf(1.0f - a));
     Rlam(i,0) = c * Rearth/1000.0f;//convert to km
 
-    float x = sinf(dlon) * cosf(lat2);
-    float y = cosf(lat1) * sinf(lat2) - sinf(lat1) * cosf(lat2) * cosf(dlon);
-    Rlam(i,1) = atan2f(y, x) * piOn180;
+    float x = sinf(dlon) * cos_lat2;
+    float y = cos_lat1 * sinf(lat2) - sin_lat1 * cos_lat2 * cosf(dlon);
+    Rlam(i,1) = atan2f(y, x) / piOn180;
   }
   return Rlam;
 }
