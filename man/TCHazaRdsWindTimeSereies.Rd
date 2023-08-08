@@ -7,7 +7,7 @@
 TCHazaRdsWindTimeSereies(outdate = NULL, GEO_land = NULL, TC, paramsTable)
 }
 \arguments{
-\item{outdate}{array of POSITx date times to linearly interpolate TC track}
+\item{outdate}{array of POSITx date times to linearly interpolate TC track,optional.}
 
 \item{GEO_land}{SpatVector or dataframe hazard geometry generated with land_geometry}
 
@@ -34,6 +34,9 @@ list() containing a timeseries\tabular{lll}{
 }
 \description{
 Compute the Hazards Associated Over the Period of a TCs Event at one Given Location
+}
+\details{
+The function calculates wind speed and direction time series from a tropical cyclone track using various wind profile models.
 }
 \examples{
 GEO_land = data.frame(dem=0,lons = 147,lats=-18,f=-4e-4,inlandD = 0)

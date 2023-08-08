@@ -257,10 +257,11 @@ DoubleHollandPressureProfile <- function(rMax, dP, cP, beta, R) {
 #' @param thetaFm input forward direction of TC
 #' @param Rlam two columns for distances and direction from grid points to TC centre in km
 #' @param V velocity profile
+#' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
 #' @return array with two columns for zonal and meridional wind speed vector-components.
 #' //@example HubbertWindField(-1e-4,20,2,10,rbind(c(50,35),c(45,40)),c(20,20))
-HubbertWindField <- function(f, rMax, vFm, thetaFm, Rlam, V) {
-    .Call(`_TCHazaRds_HubbertWindField`, f, rMax, vFm, thetaFm, Rlam, V)
+HubbertWindField <- function(f, rMax, vFm, thetaFm, Rlam, V, surface) {
+    .Call(`_TCHazaRds_HubbertWindField`, f, rMax, vFm, thetaFm, Rlam, V, surface)
 }
 
 #' @title McConochie Wind Field
@@ -272,10 +273,11 @@ HubbertWindField <- function(f, rMax, vFm, thetaFm, Rlam, V) {
 #' @param Rlam two columns for distances and direction from grid points to TC centre in km
 #' @param V velocity profile
 #' @param f coriolis parameter at the centre of TC in hz
+#' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
 #' @return array with two columns for zonal and meridional wind speed vector-components.
 #' //@example McConochieWindField(-1e-4,20,2,10,rbind(c(50,35),c(45,40)),c(20,20))
-McConochieWindField <- function(rMax, vMax, vFm, thetaFm, Rlam, V, f) {
-    .Call(`_TCHazaRds_McConochieWindField`, rMax, vMax, vFm, thetaFm, Rlam, V, f)
+McConochieWindField <- function(rMax, vMax, vFm, thetaFm, Rlam, V, f, surface) {
+    .Call(`_TCHazaRds_McConochieWindField`, rMax, vMax, vFm, thetaFm, Rlam, V, f, surface)
 }
 
 #' @title Kepert Wind Field
@@ -285,11 +287,12 @@ McConochieWindField <- function(rMax, vMax, vFm, thetaFm, Rlam, V, f) {
 #' @param vFm input forward velocity of TC
 #' @param thetaFm input forward direction of TC
 #' @param f single coriolis parameter at the centre of TC in hz
-#' @param Rlam two columns for distances and direction from grid points to TC centre in km
+#' @param Rlam two columns for distances and Cartesian direction clocwise from the x axis from grid points to TC centre in km
 #' @param VZ array two columns velocity then vorticity
+#' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
 #' @return array with two columns for zonal and meridional wind speed vector-components.
 #' //@example KepertWindField(20,20,2,10,-1e-4,rbind(c(50,35),c(45,40)),rbind(c(20,2),c(22,3)))
-KepertWindField <- function(rMax, vMax, vFm, thetaFm, f, Rlam, VZ) {
-    .Call(`_TCHazaRds_KepertWindField`, rMax, vMax, vFm, thetaFm, f, Rlam, VZ)
+KepertWindField <- function(rMax, vMax, vFm, thetaFm, f, Rlam, VZ, surface) {
+    .Call(`_TCHazaRds_KepertWindField`, rMax, vMax, vFm, thetaFm, f, Rlam, VZ, surface)
 }
 

@@ -2,7 +2,7 @@ Package: TCHazaRds
 Type: Package
 Title: Tropical Cyclone (Hurricane, Typhoon) Spatial Hazard Modelling
 Version: 1.0
-Date: 2021-12-13
+Date: 2023-08-08
 Author: Julian O'Grady
 Maintainer: Julian O'Grady <julian.ogrady@csiro.au>
 Description: Methods for generating modelled parametric Tropical Cyclone (TC) spatial hazard fields and time series output at point locations from TC tracks. R's compatibility to simply use fast Cpp code via the Rcpp package and the wide range spatial analysis tools via the terra package makes it an attractive opensource environment to study TCs. This package estimates TC vortex wind and pressure fields using parametric equations coded up in python by TCRM (https://github.com/GeoscienceAustralia/tcrm) and then coded up in Cuda cpp by TCwindgen (https://github.com/CyprienBosserelle/TCwindgen).

@@ -4,7 +4,7 @@
 \alias{McConochieWindField}
 \title{McConochie Wind Field}
 \usage{
-McConochieWindField(rMax, vMax, vFm, thetaFm, Rlam, V, f)
+McConochieWindField(rMax, vMax, vFm, thetaFm, Rlam, V, f, surface)
 }
 \arguments{
 \item{rMax}{radius of maximum winds in km}
@@ -20,6 +20,8 @@ McConochieWindField(rMax, vMax, vFm, thetaFm, Rlam, V, f)
 \item{V}{velocity profile}
 
 \item{f}{coriolis parameter at the centre of TC in hz}
+
+\item{surface}{equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.}
 }
 \value{
 array with two columns for zonal and meridional wind speed vector-components.

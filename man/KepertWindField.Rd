@@ -4,7 +4,7 @@
 \alias{KepertWindField}
 \title{Kepert Wind Field}
 \usage{
-KepertWindField(rMax, vMax, vFm, thetaFm, f, Rlam, VZ)
+KepertWindField(rMax, vMax, vFm, thetaFm, f, Rlam, VZ, surface)
 }
 \arguments{
 \item{rMax}{radius of maximum winds in km}
@@ -17,9 +17,11 @@ KepertWindField(rMax, vMax, vFm, thetaFm, f, Rlam, VZ)
 
 \item{f}{single coriolis parameter at the centre of TC in hz}
 
-\item{Rlam}{two columns for distances and direction from grid points to TC centre in km}
+\item{Rlam}{two columns for distances and Cartesian direction clocwise from the x axis from grid points to TC centre in km}
 
 \item{VZ}{array two columns velocity then vorticity}
+
+\item{surface}{equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.}
 }
 \value{
 array with two columns for zonal and meridional wind speed vector-components.

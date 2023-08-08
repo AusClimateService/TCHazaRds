@@ -4,7 +4,7 @@
 \alias{HubbertWindField}
 \title{Hubbert Wind Field}
 \usage{
-HubbertWindField(f, rMax, vFm, thetaFm, Rlam, V)
+HubbertWindField(f, rMax, vFm, thetaFm, Rlam, V, surface)
 }
 \arguments{
 \item{f}{single coriolis parameter at the centre of TC in hz}
@@ -18,6 +18,8 @@ HubbertWindField(f, rMax, vFm, thetaFm, Rlam, V)
 \item{Rlam}{two columns for distances and direction from grid points to TC centre in km}
 
 \item{V}{velocity profile}
+
+\item{surface}{equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.}
 }
 \value{
 array with two columns for zonal and meridional wind speed vector-components.

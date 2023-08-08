@@ -16,5 +16,14 @@ array of bearings see geosphere::bearing, i.e the Forward direction of the storm
 Return the Bearing for Line Segments
 }
 \examples{
-### IBTRACS HAS the WRONG BEARING!!!
+### IBTRACS HAS the WRONG BEARING!!
+require(terra)
+northwardTC <- vect(cbind(c(154,154),c(-26.1,-26)),"lines",crs="epsg:4283") #track line segment
+easthwardTC <- vect(cbind(c(154,154.1),c(-26,-26)),"lines",crs="epsg:4283") #track line segment
+southhwardTC <- vect(cbind(c(154,154),c(-26,-26.1)),"lines",crs="epsg:4283") #track line segment
+westwardTC <- vect(cbind(c(154.1,154),c(-26,-26)),"lines",crs="epsg:4283") #track line segment
+returnBearing(northwardTC)
+returnBearing(easthwardTC)
+returnBearing(southhwardTC)
+returnBearing(westwardTC)
 }

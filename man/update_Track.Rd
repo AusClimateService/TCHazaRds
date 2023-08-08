@@ -16,7 +16,7 @@ update_Track(
   vMaxModel,
   betaModel,
   eP,
-  rho
+  rho = NULL
 )
 }
 \arguments{

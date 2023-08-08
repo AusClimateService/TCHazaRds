@@ -40,7 +40,7 @@ TCi$ISO_TIME = "2022-10-04 20:00:00"
 TCi$LON = geom(TCi)[1,3]
 TCi$LAT = geom(TCi)[1,4]
 TCi$STORM_SPD = perim(TCi)/(3*3600) #m/s
-TCi$thetaFm = returnBearing(TCi)
+TCi$thetaFm = 90-returnBearing(TCi)
 #OR
 TC <- vect(system.file("extdata/YASI/YASI.shp", package="TCHazaRds"))
 TC$PRES <- TC$BOM_PRES

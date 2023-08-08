@@ -33,6 +33,7 @@ TCi = TC[47]
 
 ## -----------------------------------------------------------------------------
 paramsTable = read.csv(system.file("extdata/tuningParams/defult_params.csv",package = "TCHazaRds"))
+#paramsTable$value[6:7] = c(0,0)
 knitr::kable(paramsTable,caption = "Parameter file")
 
 ## ---- out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"--------
@@ -52,7 +53,7 @@ GEO_land = land_geometry(r,r)
 
 ## ---- out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"--------
 ats = seq(0, 65, length=14)
-HAZi = TCHazaRdsWindField(GEO_land,TCi,paramsTable=paramsTable)
+HAZi = TCHazaRdsWindField(GEO_land = GEO_land,TC = TCi,paramsTable=paramsTable)
 library(raster)       # convert for raster plots
 dummy = raster::raster() 
 TC_sp = list("sp.lines",as(TC,"Spatial"),col="black")
@@ -80,12 +81,32 @@ outdate = seq(strptime(TC$ISO_TIME[1],"%Y-%m-%d %H:%M:%S",tz="UTC"),
               strptime(rev(TC$ISO_TIME)[1],"%Y-%m-%d %H:%M:%S",tz="UTC"),
               600)
 
-GEO_land = data.frame(dem=0,lons = 147,lats=-18,f=-4e-4,inlandD = 0)
-HAZts = TCHazaRdsWindTimeSereies(GEO_land=GEO_land,TC=TC,paramsTable = paramsTable)
-HAZtsi = TCHazaRdsWindTimeSereies(outdate = outdate,GEO_land=GEO_land,TC=TC,paramsTable = paramsTable)
+GEO_landp = data.frame(dem=0,lons = 147,lats=-18,f=-4e-4,inlandD = 0)
+HAZts = TCHazaRdsWindTimeSereies(GEO_land=GEO_landp,TC=TC,paramsTable = paramsTable)
+HAZtsi = TCHazaRdsWindTimeSereies(outdate = outdate,GEO_land=GEO_landp,TC=TC,paramsTable = paramsTable)
 
-main =  paste(TCi$NAME[1],TCi$SEASON[1],"at",GEO_land$lons,GEO_land$lats)
+main =  paste(TCi$NAME[1],TCi$SEASON[1],"at",GEO_landp$lons,GEO_landp$lats)
 suppressWarnings(with(HAZts,plot(date,Sw,format = "%b-%d %HZ",type="l",main = main,ylab = "Wind speed [m/s]")))
 with(HAZtsi,lines(date,Sw,col=2))
 legend("topleft",c("6 hrly","10 min interpolated"),col = c(1,2),lty=1)
+
+## ---- out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"--------
+TCi$thetaFm = 90-returnBearing(TCi)
+pp <- TCProfilePts(TC_line = TCi,bear=TCi$thetaFm+90,length =150,step=1)
+#extract the GEO_land
+GEO_land_v = extract(GEO_land,pp,bind=TRUE,method = "bilinear")
+HAZp = TCHazaRdsWindProfile(GEO_land_v,TCi,paramsTable)
+
+HAZie = extract(HAZi,pp,bind=TRUE)#,method = "bilinear")
+
+wcol = colorRampPalette(c("white","lightblue","blue","violet","purple"))
+#see ?terra::plot
+plot(HAZi,"Sw",levels=ats,col = wcol(13),range = range(ats),type="continuous",all_levels=TRUE)
+plot(HAZp,add=TRUE,cex=1.2)
+plot(HAZp,"Sw",levels=ats,col = wcol(13),range = range(ats),type="continuous",add=TRUE,border="grey")#,all_levels=TRUE)
+lines(TC)
+
+## ---- out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"--------
+plot(HAZp$radialdist,HAZp$Sw,type="l",xlab = "Radial distance [km]",ylab = "Wind speed [m/s]");grid()
+
 

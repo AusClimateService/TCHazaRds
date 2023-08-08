@@ -13,36 +13,46 @@ using namespace Rcpp;
 NumericMatrix RdistPi(float Gridlon, float Gridlat, NumericVector TClon, NumericVector TClat)
 {
 
-	//haversine formula
-	int n = TClon.size();
-
-  NumericMatrix Rlam(n,2);
   //Rlam is a combination of ...
   //R: radius in km from the centre of the TC to the gird point
   //lam: Direction(geographic bearing, positive clockwise) !!!isn't this the Cartesian direction, counter clockwise from the x axis!!!
-  float Rearth = 6372797.560856f;
-  float pi = 3.141592f;
+  // Haversine formula constants
+  const float Rearth = 6372797.560856f;
+  const float pi = 3.141592f;
 
-  for(int i = 0;i < n; i++){
-		float lat1 = TClat[i] * pi / 180.0f;
-		float lat2 = Gridlat * pi / 180.0f;
-		float lon1 = TClon[i] * pi / 180.0f;
-		float lon2 = Gridlon * pi / 180.0f;
+  // Convert latitude and longitude to radians
+  float lat2 = Gridlat * pi / 180.0f;
+  float lon2 = Gridlon * pi / 180.0f;
 
-		float dlat = (lat2 - lat1);
-		float dlon = (lon2 - lon1);
+  // Vector to store results
+  int n = TClon.size();
+  NumericMatrix Rlam(n, 2);
 
-		float a = sinf(dlat / 2.0f)*sinf(dlat / 2.0f) + cosf(lat1)*cosf(lat2)*sinf(dlon / 2.0f)*sinf(dlon / 2.0f);
-		float c = 2.0f * atan2f(sqrtf(a), sqrtf(1.0f - a));
-		Rlam(i,0) = c*Rearth/1000.0f;//convert to km
+  // Precompute constants used in the loop
+  float cos_lat2 = cosf(lat2);
+  float sin_lat2 = sinf(lat2);
 
-		float x = sinf(dlon)*cosf(lat2);
-		float y = cosf(lat1)*sinf(lat2) - sinf(lat1)*cosf(lat2)*cosf(dlon);
-		Rlam(i,1) = atan2f(y, x)*180.0f / pi;
-	}
+  for (int i = 0; i < n; i++) {
+    float lat1 = TClat[i] * pi / 180.0f;
+    float lon1 = TClon[i] * pi / 180.0f;
+
+    // Calculate differences in latitude and longitude
+    float dlat = (lat2 - lat1);
+    float dlon = (lon2 - lon1);
+
+    // Haversine formula
+    float a = sinf(dlat / 2.0f) * sinf(dlat / 2.0f) + cosf(lat1) * cos_lat2 * sinf(dlon / 2.0f) * sinf(dlon / 2.0f);
+    float c = 2.0f * atan2f(sqrtf(a), sqrtf(1.0f - a));
+    Rlam(i, 0) = c * Rearth / 1000.0f; // Convert to km
+
+    // Calculate the bearing (direction)
+    float x = sinf(dlon) * cos_lat2;
+    float y = cosf(lat1) * sin_lat2 - sinf(lat1) * cos_lat2 * cosf(dlon);
+    Rlam(i, 1) = atan2f(y, x) * 180.0f / pi;
+  }
+
   return Rlam;
 }
-
 //' @title Jelesnianski Wind Profile Time Series
 //' @description wind profile time series at a grid point
 //' @param f single coriolis parameter at the centre of TC in hz
@@ -139,6 +149,7 @@ NumericMatrix HollandWindProfilePi(NumericVector f, NumericVector vMax, NumericV
   float Vi, Ri,fi,vMaxi,rMaxi,betai,dPi, Zi;
 	float E, d2Vm,dVm,aa,bb,cc;
 	float delta, edelta;
+  E = expf(1.0f);
 
 	for(int i = 0;i < n; i++){
 		//
@@ -147,9 +158,9 @@ NumericMatrix HollandWindProfilePi(NumericVector f, NumericVector vMax, NumericV
 	  vMaxi = vMax[i];
 	  rMaxi = rMax[i];
 	  betai = beta[i];
-	  dPi = dP[i]*100;
+	  dPi = dP[i]*100.0f;
 
-		E = expf(1.0f);
+
 		d2Vm = ((betai * dPi * (-4.0f * betai *betai *betai * dPi / rho - (-2.0f + betai *betai) * E * (fi * rMaxi) *(fi * rMaxi))) / (E * rho * sqrtf((4.0f * betai * dPi) / (E * rho) + (fi * rMaxi) *(fi * rMaxi)) * (4.0f * betai * dPi * rMaxi *rMaxi / rho + E * (fi * rMaxi *rMaxi) *(fi * rMaxi *rMaxi))));
 
     dVm = (-abs(fi)/2.0f + (E * (fi*fi) * rMaxi * sqrtf((4.0f * betai * dPi / rho) / E + (fi * rMaxi) * (fi * rMaxi))) / (2.0f * (4.0f * betai * dPi / rho + E * (fi * rMaxi) * (fi * rMaxi))));
@@ -299,6 +310,7 @@ NumericMatrix DoubleHollandWindProfilePi(NumericVector f, NumericVector vMax, Nu
 	float Vi, Ri,fi,dPi,rMax1,vMaxi,cPi,betai;
 	float E, d2Vm, aa, bb, cc;
 
+	float cubic = 0.0f; //cubic profile (cubic == 0.1f) to avoid the barotropic instability mentioned in Kepert 2001
 
 	float beta1, beta2;
 
@@ -334,9 +346,9 @@ NumericMatrix DoubleHollandWindProfilePi(NumericVector f, NumericVector vMax, Nu
 
 	//Second derivative of the profile
 	beta1 = betai;
-	//beta2 = 7.2f - cPi / 16000.0f;
-
 	beta2 = 7.2f - cPi / 16000.0f;
+
+	beta2 = betai-0.1f; //7.2f - cPi / 16000.0f;
 
 	E = exp(1.0f);
 
@@ -384,12 +396,13 @@ NumericMatrix DoubleHollandWindProfilePi(NumericVector f, NumericVector vMax, Nu
 		cc = -3.0f * aa * rMax1 * rMax1 - 2.0f * bb * rMax1;
 
 		Vi = (fi / abs(fi) * sqrt(gradientV1 + gradientV2 + (Ri *fi / 2.0f) *(Ri *fi / 2.0f)) - Ri * abs(fi) / 2.0f);
-
+		//cubic profile to avoid the barotropic instability
+		if(cubic == 1.0f){
 		if (dPi >= 1500.0f && Ri <= rMax1)
-		{
-			Vi = (fi / abs(fi) * Ri * (Ri * (Ri * aa + bb) + cc));
+		  {
+		  	Vi = (fi / abs(fi) * Ri * (Ri * (Ri * aa + bb) + cc));
+		  }
 		}
-
 		VZ(i,0) = Vi;
 		VZ(i,1) = 0.0f;
 			//(f / abs(f) * sqrtf(chi * delta * edelta + psi * nu * enu + (f * Ri / 2.0f) *(f * Ri / 2.0f)) / Ri -
@@ -447,7 +460,8 @@ NumericVector DoubleHollandPressureProfilePi(NumericVector rMax, NumericVector d
 
 	beta1 = beta[i];
 	//beta1 = 7.3f - cP / 16000.0f;
-	beta2 = 7.2 - cPi / 16000.0f;
+	//beta2 = 7.2f - cPi / 16000.0f;
+	beta2 = beta1-0.1f;
 
 
 		//
@@ -456,7 +470,7 @@ NumericVector DoubleHollandPressureProfilePi(NumericVector rMax, NumericVector d
 		nu = powf(rMax2 / Ri,beta2);
 		emu = exp(-mu);
 		enu = exp(-nu);
-		P[i] = cPi + dp1*emu + dp2*enu;
+		P[i] = (cPi + dp1*emu + dp2*enu)/100.0f;
 	}
 	return P;
 }
@@ -489,6 +503,7 @@ NumericMatrix HubbertWindFieldPi(NumericVector f, NumericVector rMax, NumericVec
 	float lami;
 	float thetaMax = 70.0f; //70.0f;
 	float pi = 3.141592f;
+	float piOn180 = pi / 180.0f;
 	float thetaFmRAD;
   float sf;
 	float thetaMaxAbsolute, asym, Vsf, phi;
@@ -498,21 +513,21 @@ NumericMatrix HubbertWindFieldPi(NumericVector f, NumericVector rMax, NumericVec
 	  sf = fi/abs(fi);
 	  vFmi = vFm[i];
 	  rMaxi = rMax[i];
-	  thetaFmRAD = thetaFm[i]*pi / 180.0f;
+	  thetaFmRAD = thetaFm[i]*piOn180;
 		//V = self.velocity(R)
 		Ri = Rlam(i,0);
 		lami = Rlam(i,1)*pi/180.0f;
 		Vi = V[i];
 		//CB didn't have -1.0f*sign(f)
-    inflow = -1.0f*sf*25.0f;
+    inflow = -sf*25.0f;
 		if (Ri < rMaxi)
 		{
 			inflow = 0;
 		}
 
-		inflow = inflow * pi / 180.0f;
+		inflow *= piOn180;
     //CB didn't have * pi / 180.0f
-		thetaMaxAbsolute = thetaFmRAD + thetaMax*-1.0f*sf* pi / 180.0f;
+		thetaMaxAbsolute = thetaFmRAD + thetaMax*-sf* piOn180;
 		asym = vFmi * cosf(thetaMaxAbsolute - lami + pi);
 		Vsf =  Km* Vi +asym;
 		phi = inflow - lami;
@@ -555,28 +570,31 @@ NumericMatrix McConochieWindFieldPi(NumericVector rMax, NumericVector vMax, Nume
 	float thetaFmRAD;
   float sf;
   sf = f/abs(f);
+  float piOn180 = pi / 180.0f;
+
 	for(int i = 0;i < n; i++){
 		//
 		//V = self.velocity(R)
-		thetaFmRAD = thetaFm[i]*pi / 180.0f;
+		thetaFmRAD = thetaFm[i]*piOn180;
 	  rMaxi = rMax[i];
 	  vMaxi = vMax[i];
 	  vFmi = vFm[i];
 		inflow = 25.0f;
 		Ri = Rlam(i,0);
-		lami = Rlam(i,1) * pi / 180.0f;
+		lami = Rlam(i,1) * piOn180;
 		Vi = V[i];
 		if (Ri < 1.2f*rMaxi)
 		{
 			//
-			inflow = 10.0f + 75.0f * (Ri / rMaxi - 1.0f);
+			//inflow = 10.0f + 75.0f * (Ri / rMaxi - 1.0f);
+			inflow = 75.0f * (Ri / rMaxi ) - 65.0f; //actual eq from McConochie
 		}
 		if (Ri < rMaxi)
 		{
 			//
 			inflow = 10.0f * Ri / rMaxi;
 		}
-		inflow = inflow*pi / 180.0f;  //missing -sign(f) i.e. f/abs(f)
+		inflow = inflow*piOn180;  //missing -sign(f) i.e. f/abs(f)
 
 		thetaMaxAbsolute = thetaFmRAD + thetaMax*-1.0f*sf*pi/180;
 		phi = inflow - lami;
@@ -594,7 +612,7 @@ NumericMatrix McConochieWindFieldPi(NumericVector rMax, NumericVector vMax, Nume
 		{
 			swrf = 0.77f - (4.31f * abs(Vsf - 19.5f) / 1000.0f);
 		}
-		if (Vsf > 45.0f)
+		if (Vsf >= 45.0f)
 		{
 			swrf = 0.66f;
 		}
@@ -628,27 +646,28 @@ NumericMatrix KepertWindFieldPi(NumericVector rMax, NumericVector vMax, NumericV
   NumericMatrix UwVw(n,2);
 
 	float Ri,fi,rMaxi,vMaxi, Vi, Zi,fs;
-	float lami;
+	float lami,lami2;
 	float K = 50.0f; //diffusivity
 	float Cd = 0.002f; // Constant drag coeff
+
 
 	float Vt,al,be,gam, albe;
 	float chi, eta, psi;
 
-	float A0r, A0i,u0s,v0s,Amr,Ami,ums,vms,Apr,Api,ups,vps,Vmi,vFmi,Umod;
+	float A0r, A0i,u0s,v0s,Amr,Ami,ums,vms,Apr,Api,ups,vps,vFmi,Umod;
 	float us, vs, usf, vsf,phi;
 	float pi = 3.141592f;
 	float thetaFmi;
-
+  float piOn180 = pi / 180.0f;
   //Vm = abs(max(V));
 
 	for(int i = 0;i < n; i++){
 		lami = Rlam(i,1);
-	  lami = lami*pi / 180.0f;
+	  lami = lami * piOn180;
 	  thetaFmi = thetaFm(i);
-		thetaFmi = thetaFmi*pi / 180.0f;
-	  rMaxi = rMax[i];
-		Ri = Rlam(i,0);
+		thetaFmi = thetaFmi * piOn180;
+	  rMaxi = rMax[i]*1000.0f;
+		Ri = Rlam(i,0)*1000.0f;
 		fi = f(i);
 		fs = fi/abs(fi);
 
@@ -657,9 +676,8 @@ NumericMatrix KepertWindFieldPi(NumericVector rMax, NumericVector vMax, NumericV
     vFmi = vFm(i);
     Umod = vFmi;
     vMaxi = vMax(i);
-    Vmi = abs(vMaxi);  //maximum V at rMax
-    if((vFmi > 0) and ((Vmi/vFmi) < 5.0f)){
-      Umod = vFmi*abs(1.25f * (1.0f - (vFmi / Vmi)));
+    if((vFmi > 0) and ((vMaxi/vFmi) < 5.0f)){
+      Umod = vFmi*abs(1.25f * (1.0f - (vFmi / vMaxi)));
     }
 
 		Vt = Umod;
@@ -703,8 +721,12 @@ NumericMatrix KepertWindFieldPi(NumericVector rMax, NumericVector vMax, NumericV
 		//ums = (Amr * expf(-0.0f * lami * fs)) * albe;
 		//vms = (Ami * expf(-1.0f * lami * fs)) * fs;
 		//DEV branch is different to MAIN branch of TCRM for the following lines
-		ums = (Amr * (cosf(-(lami-thetaFmi) * fs) + 0.0f * sinf(-(lami-thetaFmi) * fs))) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
-		vms = (Ami * (cosf(-(lami-thetaFmi) * fs) + 1.0f * sinf(-(lami-thetaFmi) * fs))) * fs;
+		//ums = (Amr * (cosf(-(lami-thetaFmi) * fs) + 0.0f * sinf(-(lami-thetaFmi) * fs))) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
+		//vms = (Ami * (cosf(-(lami-thetaFmi) * fs) + 1.0f * sinf(-(lami-thetaFmi) * fs))) * fs;
+		lami2 = lami - thetaFmi;
+		ums = (Amr * (cosf(lami2 * fs) )) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
+		vms = (Ami * (- 1.0f * sinf(lami2 * fs))) * fs;
+
 
 		Apr = -(eta * (1.0f - 2.0f * albe + (1.0f + 0.0f) * (1.0f - albe) * psi) * Vt) / (albe * ((2.0f + 2.0f * 0.0f) * (1.0f + eta * psi) + 3.0f * eta + 3 * 0.0f * psi));
 		Api = -(eta * (1.0f - 2.0f * albe + (1.0f + 1.0f) * (1.0f - albe) * psi) * Vt) / (albe * ((2.0f + 2.0f * 1.0f) * (1.0f + eta * psi) + 3.0f * eta + 3 * 1.0f * psi));
@@ -718,21 +740,26 @@ NumericMatrix KepertWindFieldPi(NumericVector rMax, NumericVector vMax, NumericV
 		//Second asymmetric surface component
 		//ups = (Apr * expf(0.0f * lami * fs)) * albe;
 		//vps = (Api * expf(1.0f * lami * fs)) * fs;
-		ups = (Apr * (cosf((lami-thetaFmi) * fs) + 0.0f * sinf((lami-thetaFmi) * fs))) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
-		vps = (Api * (cosf((lami-thetaFmi) * fs) + 1.0f * sinf((lami-thetaFmi) * fs))) * albe;
+		//ups = (Apr * (cosf((lami-thetaFmi) * fs) + 0.0f * sinf((lami-thetaFmi) * fs))) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
+		//vps = (Api * (cosf((lami-thetaFmi) * fs) + 1.0f * sinf((lami-thetaFmi) * fs))) * albe;
+
+		ups = (Apr * (cosf(lami2 * fs))) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
+		vps = (Api * (1.0f * sinf(lami2 * fs))) * fs;//albe;
+
 
 		//Total surface wind in (moving coordinate system)
 		us = u0s + ups + ums;
 		vs = v0s + vps + vms + Vi;
 
-		usf = us + Vt * cosf(lami - thetaFmi);
-		vsf = vs - Vt * sinf(lami - thetaFmi);
+		usf = us + Vt * cosf(lami2);
+		vsf = vs - Vt * sinf(lami2);
 		phi = atan2f(usf, vsf);
 	  //if(phi > pi){
 	  //  phi = pi - phi;
 	  //}
-		UwVw(i,0) = sqrtf(usf*usf + vsf *vsf) * sinf(phi - lami);
-		UwVw(i,1) = sqrtf(usf*usf + vsf *vsf) * cosf(phi - lami);
+	  float square_term = sqrtf(usf * usf + vsf * vsf);
+		UwVw(i,0) = square_term * sinf(phi - lami);
+		UwVw(i,1) = square_term * cosf(phi - lami);
 
 	}
 	return UwVw;
@@ -760,23 +787,25 @@ NumericMatrix Rdist(NumericVector Gridlon, NumericVector Gridlat, float TClon, f
   //lam: Direction(geographic bearing, positive clockwise) !!!isn't this the Cartesian direction, counter clockwise from the x axis!!!
   float Rearth = 6372797.560856f;
   float pi = 3.141592f;
+  float piOn180 = pi / 180.0f;
+
+  float lat1 = TClat * piOn180;
+  float lon1 = TClon * piOn180;
 
   for(int i = 0;i < n; i++){
-    float lat1 = TClat * pi / 180.0f;
-    float lat2 = Gridlat[i] * pi / 180.0f;
-    float lon1 = TClon * pi / 180.0f;
-    float lon2 = Gridlon[i] * pi / 180.0f;
+    float lat2 = Gridlat[i] * piOn180;
+    float lon2 = Gridlon[i] * piOn180;
 
-    float dlat = (lat2 - lat1);
-    float dlon = (lon2 - lon1);
+    float dlat = lat2 - lat1;
+    float dlon = lon2 - lon1;
 
     float a = sinf(dlat / 2.0f)*sinf(dlat / 2.0f) + cosf(lat1)*cosf(lat2)*sinf(dlon / 2.0f)*sinf(dlon / 2.0f);
     float c = 2.0f * atan2f(sqrtf(a), sqrtf(1.0f - a));
-    Rlam(i,0) = c*Rearth/1000.0f;//convert to km
+    Rlam(i,0) = c * Rearth/1000.0f;//convert to km
 
-    float x = sinf(dlon)*cosf(lat2);
-    float y = cosf(lat1)*sinf(lat2) - sinf(lat1)*cosf(lat2)*cosf(dlon);
-    Rlam(i,1) = atan2f(y, x)*180.0f / pi;
+    float x = sinf(dlon) * cosf(lat2);
+    float y = cosf(lat1) * sinf(lat2) - sinf(lat1) * cosf(lat2) * cosf(dlon);
+    Rlam(i,1) = atan2f(y, x) * piOn180;
   }
   return Rlam;
 }
@@ -834,39 +863,40 @@ NumericMatrix HollandWindProfile(float f, float vMax, float rMax, float dP, floa
   float E, d2Vm,dVm,aa,bb,cc;
   float delta, edelta;
 
-  dP = dP*100;
+  dP *= 100.0f;
+  E = expf(1.0f);
 
   for(int i = 0;i < n; i++){
     //
     Ri = R[i];
 
-    E = expf(1.0f);
-    d2Vm = ((beta * dP * (-4.0f * beta *beta *beta * dP / rho - (-2.0f + beta *beta) * E * (f * rMax) *(f * rMax))) / (E * rho * sqrtf((4.0f * beta * dP) / (E * rho) + (f * rMax) *(f * rMax)) * (4.0f * beta * dP * rMax *rMax / rho + E * (f * rMax *rMax) *(f * rMax *rMax))));
 
-    dVm = (-abs(f)/2.0f + (E * (f*f) * rMax * sqrtf((4.0f * beta * dP / rho) / E + (f * rMax) * (f * rMax))) / (2.0f * (4.0f * beta * dP / rho + E * (f * rMax) * (f * rMax))));
+    if (Ri <= rMax){
 
-    aa = ((d2Vm / 2.0f - (dVm - vMax / rMax) / rMax) / rMax);
+      d2Vm = ((beta * dP * (-4.0f * beta *beta *beta * dP / rho - (-2.0f + beta *beta) * E * (f * rMax) *(f * rMax))) / (E * rho * sqrtf((4.0f * beta * dP) / (E * rho) + (f * rMax) *(f * rMax)) * (4.0f * beta * dP * rMax *rMax / rho + E * (f * rMax *rMax) *(f * rMax *rMax))));
 
-    bb = (d2Vm - 6.0f * aa * rMax) / 2.0f;
+      dVm = (-abs(f)/2.0f + (E * (f*f) * rMax * sqrtf((4.0f * beta * dP / rho) / E + (f * rMax) * (f * rMax))) / (2.0f * (4.0f * beta * dP / rho + E * (f * rMax) * (f * rMax))));
 
-    cc = dVm -3.0f * aa * rMax * rMax - 2.0f * bb * rMax;
+      aa = ((d2Vm / 2.0f - (dVm - vMax / rMax) / rMax) / rMax);
 
-    delta = powf(rMax / Ri, beta);
-    edelta = expf(-delta);
-    if (Ri <= rMax)
-    {
+      bb = (d2Vm - 6.0f * aa * rMax) / 2.0f;
+
+      cc = dVm -3.0f * aa * rMax * rMax - 2.0f * bb * rMax;
+
       Vi = (Ri * (Ri * (Ri * aa + bb) + cc));
       Zi = Ri * (Ri * 4.0f * aa + 3.0f * bb) + 2.0f * cc;
     }
     else
     {
+      delta = powf(rMax / Ri, beta);
+      edelta = expf(-delta);
       //dP = dP*100.0f; // !need to multiply by dP 100 to get to Pa not in TCRM  https://github.com/GeoscienceAustralia/tcrm/blob/1916233f7dfdecf6a1b5f5b0d89f3eb1d164bd3e/wind/windmodels.py#L381
       Vi =  (sqrtf((dP * beta / rho) * delta * edelta + (Ri * f / 2.0f)*(Ri * f / 2.0f)) - Ri *abs(f) / 2.0f);
       //Zi = ((sqrtf((dP * beta / rho) * delta * edelta + (Ri * f / 2.0f)*(Ri * f / 2.0f))) / Ri - abs(f) + edelta * (2.0f * (beta * beta) * dP * (delta - 1.0f) * delta + rho * edelta * (f * Ri) *(f * Ri)) / (2.0f * rho * Ri * sqrtf(4.0f * (beta * dP / rho) * delta * edelta + (f * Ri) *(f * Ri))));
       Zi = abs(f) + (beta*beta * dP * (delta * delta) * edelta / (2.0f * rho * Ri) - beta*beta * dP * delta * edelta / (2.0f * rho * Ri) + Ri * f * f / 4.0f) / sqrtf(beta * dP * delta * edelta / rho + (Ri * f / 2)*(Ri * f / 2)) + (sqrtf(beta * dP * delta * edelta / rho + (Ri * f / 2)*(Ri * f / 2))) / Ri;
     }
-    VZ(i,0) = Vi*f / abs(f);
-    VZ(i,1) = Zi*f / abs(f);
+    VZ(i,0) = Vi* f / abs(f);
+    VZ(i,1) = Zi* f / abs(f);
   }
   return VZ;
 }
@@ -979,7 +1009,7 @@ NumericMatrix DoubleHollandWindProfile(float f, float vMax, float rMax, float dP
   NumericMatrix VZ(n,2);
   float Vi, Ri,rMax1;
   float E, d2Vm, aa, bb, cc;
-
+  float cubic = 0.0f; //cubic profile (cubic == 0.1f) to avoid the barotropic instability mentioned in Kepert 2001
 
   float beta1, beta2;
 
@@ -993,9 +1023,6 @@ NumericMatrix DoubleHollandWindProfile(float f, float vMax, float rMax, float dP
   dP = dP*100.0f; //pa not hPa
   cP = cP*100.0f;
   rMax1 = rMax;
-  for(int i = 0;i < n; i++){
-    //
-    Ri = R[i];
 
     if (dP < 1500.0f)
     {
@@ -1013,10 +1040,10 @@ NumericMatrix DoubleHollandWindProfile(float f, float vMax, float rMax, float dP
     beta1 = beta;
     //beta2 = 7.2f - cP / 16000.0f;
 
-    beta2 = 7.2f - cP / 16000.0f;
-
+    //beta2 = 7.2f - cP / 16000.0f;
+    beta2 = beta - 0.1f;
     E = exp(1.0f);
-
+    if(cubic == 1.0f){
     nu = pow((rMax2 / rMax1), beta2);
     //missing powf on second line
     d2Vm = (-1.0f / (8.0f * pow(4.0f * beta1 * dp1 / (rho * E) + (4.0f * beta2 * dp2 / rho) * nu * exp(-nu) + powf(rMax1 * f, 2.0f), 1.5f))*
@@ -1042,7 +1069,13 @@ NumericMatrix DoubleHollandWindProfile(float f, float vMax, float rMax, float dP
       (nu *nu*nu) / (rMax1 *rMax1) * exp(-nu)+
       2.0f * f *f));
 
-
+      aa = (d2Vm / 2.0f - (-vMax / rMax1) / rMax1) / rMax1;
+      bb = (d2Vm - 6.0f * aa * rMax1) / 2.0f;
+      cc = -3.0f * aa * rMax1 * rMax1 - 2.0f * bb * rMax1;
+    }
+  for(int i = 0;i < n; i++){
+    //
+    Ri = R[i];
 
     mu = powf(rMax1 / Ri, beta1);
     nu = powf(rMax2 / Ri, beta2);
@@ -1055,20 +1088,20 @@ NumericMatrix DoubleHollandWindProfile(float f, float vMax, float rMax, float dP
     gradientV1 = (chi) * mu * emu;
     gradientV2 = (psi) * nu * enu;
 
-
-    aa = (d2Vm / 2.0f - (-vMax / rMax1) / rMax1) / rMax1;
-    bb = (d2Vm - 6.0f * aa * rMax1) / 2.0f;
-    cc = -3.0f * aa * rMax1 * rMax1 - 2.0f * bb * rMax1;
-
     Vi = (f / abs(f) * sqrt(gradientV1 + gradientV2 + (Ri *f / 2.0f) *(Ri *f / 2.0f)) - Ri * abs(f) / 2.0f);
 
-    if (dP >= 1500.0f && Ri <= rMax1)
+    //cubic profile to avoid the barotropic instability
+    if(cubic == 0.1f){
+    if (dP >= 1500.0f && Ri <= rMax1){
     {
       Vi = (f / abs(f) * Ri * (Ri * (Ri * aa + bb) + cc));
+    }
+    }
     }
 
     VZ(i,0) = Vi;
     VZ(i,1) = 0.0f;
+
     //(f / abs(f) * sqrtf(chi * delta * edelta + psi * nu * enu + (f * Ri / 2.0f) *(f * Ri / 2.0f)) / Ri -
     //abs(f) + (0.5f) *
     //(chi * ddelta * edelta * (1 - delta) +
@@ -1104,7 +1137,7 @@ NumericVector DoubleHollandPressureProfile(float rMax, float dP, float cP,  floa
   float nu, mu, enu, emu;
 
   float rMax2 = 150.0f;
-
+  float rMax1 = rMax;
   dP = dP*100;
   cP = cP*100;
   for(int i = 0;i < n; i++){
@@ -1122,16 +1155,16 @@ NumericVector DoubleHollandPressureProfile(float rMax, float dP, float cP,  floa
 
     beta1 = beta;
     //beta1 = 7.3f - cP / 16000.0f;
-    beta2 = 7.2 - cP / 16000.0f;
-
+    //beta2 = 7.2f - cP / 16000.0f;
+    beta2 = beta - 0.1f;
 
     //
     Ri = R[i];
-    mu = powf(rMax / Ri,beta1);
+    mu = powf(rMax1 / Ri,beta1);
     nu = powf(rMax2 / Ri,beta2);
     emu = exp(-mu);
     enu = exp(-nu);
-    P[i] = cP + dp1*emu + dp2*enu;
+    P[i] = (cP + dp1*emu + dp2*enu)/100.0f;
   }
   return P;
 }
@@ -1144,10 +1177,11 @@ NumericVector DoubleHollandPressureProfile(float rMax, float dP, float cP,  floa
 //' @param thetaFm input forward direction of TC
 //' @param Rlam two columns for distances and direction from grid points to TC centre in km
 //' @param V velocity profile
+//' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
 //' @return array with two columns for zonal and meridional wind speed vector-components.
 //' //@example HubbertWindField(-1e-4,20,2,10,rbind(c(50,35),c(45,40)),c(20,20))
 // [[Rcpp::export]]
-NumericMatrix HubbertWindField(float f, float rMax, float vFm, float thetaFm, NumericMatrix Rlam, NumericVector V)
+NumericMatrix HubbertWindField(float f, float rMax, float vFm, float thetaFm, NumericMatrix Rlam, NumericVector V,float surface)
 {
   //
   //Hubbert, G.D., G.J.Holland, L.M.Leslie and M.J.Manton, 1991:
@@ -1157,7 +1191,8 @@ NumericMatrix HubbertWindField(float f, float rMax, float vFm, float thetaFm, Nu
   int n = V.size();
   NumericMatrix UwVw(n,2);
 
-  float Km = 0.70; //reduction factor
+  float Km = 1.0f; //no reduction
+  if(surface == 1.0f) Km = 0.70f; // gradient to surface wind reduction factor
 
   float inflow;
   float Ri,Vi;
@@ -1169,11 +1204,16 @@ NumericMatrix HubbertWindField(float f, float rMax, float vFm, float thetaFm, Nu
   float thetaMaxAbsolute, asym, Vsf, phi;
   sf = f/abs(f);
   if(sf > 0) thetaMax = thetaMax+180.0f; //correct for northern hemisphere
+  float piOn180 = pi / 180.0f;
+
+  thetaFmRAD = thetaFm * piOn180;
+  thetaMaxAbsolute = thetaFmRAD + thetaMax*-1.0 * sf * piOn180;
+
   for(int i = 0;i < n; i++){
-    thetaFmRAD = thetaFm*pi / 180.0f;
+
     //V = self.velocity(R)
     Ri = Rlam(i,0);
-    lami = Rlam(i,1)*pi/180.0f;
+    lami = Rlam(i,1) * piOn180;
     Vi = V[i];
     //CB didn't have -1.0f*sign(f)
     inflow = -1.0f*sf*25.0f;
@@ -1182,9 +1222,9 @@ NumericMatrix HubbertWindField(float f, float rMax, float vFm, float thetaFm, Nu
       inflow = 0;
     }
 
-    inflow = inflow * pi / 180.0f;
+    inflow = inflow * piOn180;
     //CB didn't have * pi / 180.0f
-    thetaMaxAbsolute = thetaFmRAD + thetaMax*-1.0*sf* pi / 180.0f;
+
     asym = vFm * cosf(thetaMaxAbsolute - lami + pi);
     Vsf =  Km* Vi +asym;
     phi = inflow - lami;
@@ -1205,10 +1245,11 @@ NumericMatrix HubbertWindField(float f, float rMax, float vFm, float thetaFm, Nu
 //' @param Rlam two columns for distances and direction from grid points to TC centre in km
 //' @param V velocity profile
 //' @param f coriolis parameter at the centre of TC in hz
+//' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
 //' @return array with two columns for zonal and meridional wind speed vector-components.
 //' //@example McConochieWindField(-1e-4,20,2,10,rbind(c(50,35),c(45,40)),c(20,20))
 // [[Rcpp::export]]
-NumericMatrix McConochieWindField(float rMax, float vMax, float vFm, float thetaFm, NumericMatrix Rlam, NumericVector V,float f)
+NumericMatrix McConochieWindField(float rMax, float vMax, float vFm, float thetaFm, NumericMatrix Rlam, NumericVector V,float f,float surface)
 {
   //
   //McConochie, J.D., T.A.Hardy and L.B.Mason, 2004:
@@ -1225,47 +1266,54 @@ NumericMatrix McConochieWindField(float rMax, float vMax, float vFm, float theta
   float pi = 3.141592f;
   float thetaMaxAbsolute, asym, Vsf, phi,swrf;
   float thetaFmRAD;
-  thetaFmRAD = thetaFm*pi / 180.0f;
-  inflow = 25.0f;
+  float piOn180 = pi / 180.0f;
+  thetaFmRAD = thetaFm * piOn180;
+  rMax = rMax;
   float sf;
   sf = f/abs(f);
+  thetaMaxAbsolute = thetaFmRAD + thetaMax*-1.0f*sf;
   for(int i = 0;i < n; i++){
     //
     //V = self.velocity(R)
     Ri = Rlam(i,0);
-    lami = Rlam(i,1) * pi / 180.0f;
+    lami = Rlam(i,1) * piOn180;
     Vi = V[i];
+    inflow = 25.0f;
     if (Ri < 1.2f*rMax)
     {
-      //
-      inflow = 10.0f + 75.0f * (Ri / rMax - 1.0f);
+      // !!!TCRM = 35 at Ri == rMax, it should equal 25
+      //inflow = 10.0f + 75.0f * (Ri / rMax - 1.0f);
+      inflow = 75.0f * (Ri / rMax ) - 65.0f; //actual eq from McConochie
     }
     if (Ri < rMax)
     {
       //
       inflow = 10.0f * Ri / rMax;
     }
-    inflow = inflow*pi / 180.0f;  //missing -sign(f) i.e. f/abs(f)
+    inflow = inflow * piOn180;  //missing -sign(f) i.e. f/abs(f)
 
-    thetaMaxAbsolute = thetaFmRAD + thetaMax*-1.0f*sf;
+
     phi = inflow - lami;
 
     asym = (0.5f * (1.0f + cosf(thetaMaxAbsolute - lami)) * vFm * (Vi / vMax));
     Vsf = Vi + asym;
-
-    swrf = 0.81f;
-    // had an extra ;
-    if (Vsf >= 6.0f)
+    swrf = 1.0f;  //no reduction
+    if(surface == 1.0f) //gradient to surface wind reduction factor
     {
-      swrf = 0.81f - (2.93f * abs(Vsf - 6.0f) / 1000.0f);
-    }
-    if (Vsf >= 19.5f)
-    {
-      swrf = 0.77f - (4.31f * abs(Vsf - 19.5f) / 1000.0f);
-    }
-    if (Vsf > 45.0f)
-    {
-      swrf = 0.66f;
+      swrf = 0.81f;
+      // had an extra ;
+      if (Vsf >= 6.0f)
+      {
+        swrf = 0.81f - (2.93f * abs(Vsf - 6.0f) / 1000.0f);
+      }
+      if (Vsf >= 19.5f)
+      {
+        swrf = 0.77f - (4.31f * abs(Vsf - 19.5f) / 1000.0f);
+      }
+      if (Vsf >= 45.0f)
+      {
+        swrf = 0.66f;
+      }
     }
     // TCRM has an additional factor to convert to 1-munite sustained wind speed:
     UwVw(i,0) = swrf * Vsf * sinf(phi);
@@ -1282,12 +1330,13 @@ NumericMatrix McConochieWindField(float rMax, float vMax, float vFm, float theta
 //' @param vFm input forward velocity of TC
 //' @param thetaFm input forward direction of TC
 //' @param f single coriolis parameter at the centre of TC in hz
-//' @param Rlam two columns for distances and direction from grid points to TC centre in km
+//' @param Rlam two columns for distances and Cartesian direction clocwise from the x axis from grid points to TC centre in km
 //' @param VZ array two columns velocity then vorticity
+//' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
 //' @return array with two columns for zonal and meridional wind speed vector-components.
 //' //@example KepertWindField(20,20,2,10,-1e-4,rbind(c(50,35),c(45,40)),rbind(c(20,2),c(22,3)))
 // [[Rcpp::export]]
-NumericMatrix KepertWindField(float rMax, float vMax, float vFm, float thetaFm, float f, NumericMatrix Rlam, NumericMatrix VZ)
+NumericMatrix KepertWindField(float rMax, float vMax, float vFm, float thetaFm, float f, NumericMatrix Rlam, NumericMatrix VZ,float surface)
 {
   // Kepert, J., 2001: The Dynamics of Boundary Layer Jets within the
   //Tropical Cyclone Core.Part I : Linear Theory.J.Atmos.Sci., 58,
@@ -1304,30 +1353,36 @@ NumericMatrix KepertWindField(float rMax, float vMax, float vFm, float thetaFm, 
   float Vt,al,be,gam, albe;
   float chi, eta, psi;
 
-  float A0r, A0i,u0s,v0s,Amr,Ami,ums,vms,Apr,Api,ups,vps,Vmi,Umod;
+  float A0r, A0i,u0s,v0s,Amr,Ami,ums,vms,Apr,Api,ups,vps,Umod;
+
   float us, vs, usf, vsf,phi;
   float pi = 3.141592f;
+  float piOn180 = pi / 180.0f;
+  rMax  = rMax*1000.0f;
+  float lami2,Ks;
 
   fs = f/abs(f);
   Umod = vFm;
-  Vmi = abs(vMax);  //maximum V at rMax
-  //Vm = abs(max(V));
-  thetaFm = thetaFm*pi / 180.0f;
-  if((vFm > 0) and ((Vmi/vFm) < 5.0f)){
-    Umod = vFm*abs(1.25f * (1.0f - (vFm / Vmi)));
+  thetaFm = thetaFm * piOn180;
+  if((vFm > 0) and ((vMax/vFm) < 5.0f)){
+    Umod = vFm*abs(1.25f * (1.0f - (vFm / vMax)));
   }
-  Vt = Umod;
+
 
   for(int i = 0;i < n; i++){
     lami = Rlam(i,1);
-    lami = lami*pi / 180.0f;
+    lami = lami * piOn180;
 
-    Ri = Rlam(i,0);
+    Ri = Rlam(i,0)*1000.0f;
 
     Vi = VZ(i,0);
     Zi = VZ(i,1);
 
-    if (Ri > (2.0f * rMax))  //this is not the core https://github.com/GeoscienceAustralia/tcrm/blob/1916233f7dfdecf6a1b5f5b0d89f3eb1d164bd3e/wind/windmodels.py#L1063
+    //if(Vi*fs < 0) Vi = Vi*fs; //Vi and f must have the same sign
+    //if(Zi*fs < 0) Zi = Zi*fs;
+
+    Vt = Umod;
+    if (Ri >= (2.0f * rMax))  //this is not the core https://github.com/GeoscienceAustralia/tcrm/blob/1916233f7dfdecf6a1b5f5b0d89f3eb1d164bd3e/wind/windmodels.py#L1063
     {
       Vt = Umod * expf(-powf((Ri / (2.0f * rMax)) - 1.0f, 2.0f));
     }
@@ -1344,6 +1399,9 @@ NumericMatrix KepertWindField(float rMax, float vMax, float vFm, float thetaFm, 
     eta = abs((Cd / K) * Vi / sqrtf(sqrt(al * be) + abs(gam)));
     psi = abs((Cd / K) * Vi / sqrtf(abs(sqrt(al * be) - abs(gam))));
 
+    Ks = ((chi * chi) + 2.0f * chi + 2.0f)/(2.0f * chi * chi + 3.0f * chi + 2.0f);//gradient to surface wind reduction factor Eq 30 in Kepert 2001
+    if(surface == 1.0f) Ks = 1;
+
     // converted from complex number formula to this
     A0r = -(chi  * (1.0f + 0.0f * (1.0f + chi)) * Vi) / (2.0f * chi * chi + 3.0f * chi + 2.0f);
     A0i = -(chi  * (1.0f + 1.0f * (1.0f + chi)) * Vi) / (2.0f * chi * chi + 3.0f * chi + 2.0f);
@@ -1351,6 +1409,7 @@ NumericMatrix KepertWindField(float rMax, float vMax, float vFm, float thetaFm, 
     //Symmetric surface wind component
     u0s = A0r *albe * fs;
     v0s = A0i;
+
 
     // converted from complex number formula to this
     Amr = -(psi * (1.0f + 2.0f * albe + (1.0f+0.0f)*(1.0f + albe) * eta) * Vt) / (albe * ((2.0f + 2.0f * 0.0f) * (1.0f + eta * psi) + 3.0f * psi + 3.0f * 0.0f * eta));
@@ -1366,12 +1425,17 @@ NumericMatrix KepertWindField(float rMax, float vMax, float vFm, float thetaFm, 
     //frst asymmetric surface component
     //ums = (Amr * expf(-0.0f * lami * fs)) * albe;
     //vms = (Ami * expf(-1.0f * lami * fs)) * fs;
+    lami2 = lami-thetaFm;//- (pi/2.0f-thetaFm+pi);
+    //lami2 = lami-(pi/2.0f-thetaFm);//- (pi/2.0f-thetaFm+pi);
 
-    ums = (Amr * (cosf(-(lami- thetaFm) * fs) + 0.0f * sinf(-(lami- thetaFm) * fs))) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
-    vms = (Ami * (cosf(-(lami- thetaFm) * fs) + 1.0f * sinf(-(lami- thetaFm) * fs))) * fs;
+    //ums = (Amr * (cosf(lami2 * fs) - 0.0f * sinf(lami2 * fs))) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
+    //vms = (Ami * (cosf(lami2 * fs) - 1.0f * sinf(lami2 * fs))) * fs;
 
-    Apr = -(eta * (1.0f - 2.0f * albe + (1.0f + 0.0f) * (1.0f - albe) * psi) * Vt) / (albe * ((2.0f + 2.0f * 0.0f) * (1.0f + eta * psi) + 3.0f * eta + 3 * 0.0f * psi));
-    Api = -(eta * (1.0f - 2.0f * albe + (1.0f + 1.0f) * (1.0f - albe) * psi) * Vt) / (albe * ((2.0f + 2.0f * 1.0f) * (1.0f + eta * psi) + 3.0f * eta + 3 * 1.0f * psi));
+    ums = (Amr * (cosf(lami2 * fs) )) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
+    vms = (Ami * (- 1.0f * sinf(lami2 * fs))) * fs;
+
+    Apr = -(eta * (1.0f - 2.0f * albe + (1.0f + 0.0f) * (1.0f - albe) * psi) * Vt) / (albe * ((2.0f + 2.0f * 0.0f) * (1.0f + eta * psi) + 3.0f * eta + 3.0f * 0.0f * psi));
+    Api = -(eta * (1.0f - 2.0f * albe + (1.0f + 1.0f) * (1.0f - albe) * psi) * Vt) / (albe * ((2.0f + 2.0f * 1.0f) * (1.0f + eta * psi) + 3.0f * eta + 3.0f * 1.0f * psi));
 
     if (abs(gam) > sqrtf(al*be))
     {
@@ -1382,22 +1446,25 @@ NumericMatrix KepertWindField(float rMax, float vMax, float vFm, float thetaFm, 
     //Second asymmetric surface component
     //ups = (Apr * expf(0.0f * lami * fs)) * albe;
     //vps = (Api * expf(1.0f * lami * fs)) * fs;
-    ups = (Apr * (cosf((lami- thetaFm) * fs) + 0.0f * sinf((lami- thetaFm) * fs))) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
-    vps = (Api * (cosf((lami- thetaFm) * fs) + 1.0f * sinf((lami- thetaFm) * fs))) * albe;
+    //ups = (Apr * (cosf(lami2 * fs) + 0.0f * sinf(lami2 * fs))) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
+    //vps = (Api * (cosf(lami2 * fs) + 1.0f * sinf(lami2 * fs))) * fs;//albe;
+
+    ups = (Apr * (cosf(lami2 * fs))) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
+    vps = (Api * (1.0f * sinf(lami2 * fs))) * fs;//albe;
 
     //Total surface wind in (moving coordinate system)
     us = u0s + ups + ums;
     vs = v0s + vps + vms + Vi;
 
-    usf = us + Vt * cosf(lami - thetaFm);
-    vsf = vs - Vt * sinf(lami - thetaFm);
+    usf = us + Vt * cosf(lami2);
+    vsf = vs - Vt * sinf(lami2);
     phi = atan2f(usf, vsf);
     //if(phi > pi){
     //  phi = pi - phi;
     //}
-
-    UwVw(i,0) = sqrtf(usf*usf + vsf *vsf) * sinf(phi - lami);
-    UwVw(i,1) = sqrtf(usf*usf + vsf *vsf) * cosf(phi - lami);
+    float square_term = sqrtf(usf*usf + vsf *vsf);
+    UwVw(i,0) = square_term * sinf(phi - lami)/Ks;
+    UwVw(i,1) = square_term * cosf(phi - lami)/Ks;
 
   }
   return UwVw;
