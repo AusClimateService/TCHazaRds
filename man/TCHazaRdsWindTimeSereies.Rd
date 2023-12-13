@@ -2,14 +2,14 @@
 % Please edit documentation in R/WindHazaRds.R
 \name{TCHazaRdsWindTimeSereies}
 \alias{TCHazaRdsWindTimeSereies}
-\title{Compute the Hazards Associated Over the Period of a TCs Event at one Given Location}
+\title{Compute the Wind Hazards Associated Over the Period of a TCs Event at one Given Location}
 \usage{
 TCHazaRdsWindTimeSereies(outdate = NULL, GEO_land = NULL, TC, paramsTable)
 }
 \arguments{
 \item{outdate}{array of POSITx date times to linearly interpolate TC track,optional.}
 
-\item{GEO_land}{SpatVector or dataframe hazard geometry generated with land_geometry}
+\item{GEO_land}{dataframe hazard geometry generated with land_geometry}
 
 \item{TC}{SpatVector of Tropical cyclone track parameters}
 
@@ -33,7 +33,7 @@ list() containing a timeseries\tabular{lll}{
 }
 }
 \description{
-Compute the Hazards Associated Over the Period of a TCs Event at one Given Location
+Compute the Wind Hazards Associated Over the Period of a TCs Event at one Given Location
 }
 \details{
 The function calculates wind speed and direction time series from a tropical cyclone track using various wind profile models.

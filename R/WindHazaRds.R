@@ -257,10 +257,10 @@ TCvectInterp = function(outdate = NULL, TC, paramsTable) {
 
 
 
-#' Compute the Hazards Associated Over the Period of a TCs Event at one Given Location
+#' Compute the Wind Hazards Associated Over the Period of a TCs Event at one Given Location
 #'
 #' @param outdate array of POSITx date times to linearly interpolate TC track,optional.
-#' @param GEO_land SpatVector or dataframe hazard geometry generated with land_geometry
+#' @param GEO_land dataframe hazard geometry generated with land_geometry
 #' @param TC SpatVector of Tropical cyclone track parameters
 #' @param paramsTable Global parameters to compute TC Hazards.
 #'
@@ -380,6 +380,7 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
   v$Dw <- Dw
   v$P <- P
   v$R <- R
+  v$lam <- Rlam[,2]
   v$rMax <- TRACK$rMax
   v$vMax <- TRACK$vMax
   v$beta <- TRACK$beta
@@ -387,6 +388,7 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
   v$cP <- TRACK$cPs
   v$TClat <- TRACK$TClats
   v$vFm <- TRACK$vFm
+  v$thetaFm <- TRACK$thetaFm
 
   return(v)
 }
@@ -407,7 +409,7 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
 #' | Uw      | Meridional  wind speed | m/s |
 #' | Vw      | Zonal wind speed | m/s  |
 #' | Sw     | Wind speed | m/s  |
-#' | Dw     | Wind direction | deg clockwise from true north  |
+#' | Dw     | The direction from which wind originates | deg clockwise from true north.   |
 #'
 #' @md
 #'
@@ -515,7 +517,8 @@ TCHazaRdsWindField <- function(GEO_land, TC, paramsTable) {
   # Calculate wind speed and wind direction
   Sw <- sqrt(Uw^2 + Vw^2)
   Va <- terra::atan2(Vw, Uw)
-  Dw <- 90 - (Va - pi / 2) * 180 / pi
+  #add pi to get direction from, then remove direction from from 90 to get clockwise from north
+  Dw <- 90 - (Va - pi ) * 180 / pi # Convert to clockwise from true north
   Dwv <- terra::values(Dw)
 
   # Adjust wind direction to be within the range [0, 360]
@@ -587,7 +590,7 @@ TCHazaRdsWindField <- function(GEO_land, TC, paramsTable) {
 #' | Uw      | Meridional  wind speed | m/s |
 #' | Vw      | Zonal wind speed | m/s  |
 #' | Sw     | Wind speed | m/s  |
-#' | Dw     | Wind direction | deg clockwise from true north  |
+#' | Dw     | The direction from which wind originates | deg clockwise from true north  |
 #'
 #' @md
 #'

@@ -33,7 +33,7 @@ SpatRasterDataset with the following attributes.\tabular{lll}{
    Uw \tab Meridional  wind speed \tab m/s \cr
    Vw \tab Zonal wind speed \tab m/s \cr
    Sw \tab Wind speed \tab m/s \cr
-   Dw \tab Wind direction \tab deg clockwise from true north \cr
+   Dw \tab The direction from which wind originates \tab deg clockwise from true north \cr
 }
 }
 \description{
