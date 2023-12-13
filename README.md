@@ -11,6 +11,7 @@ For windows you need to first install [Rtools](https://cran.r-project.org/bin/wi
 Then, in R, install the package.
 
 ```
+require(remotes)
 Sys.setenv("R_REMOTES_NO_ERRORS_FROM_WARNINGS" = "true")
-remotes::install_github("AusClimateService/TCHazaRds")
+remotes::install_github("AusClimateService/TCHazaRds", dependencies = TRUE)
 ```
