@@ -61,12 +61,10 @@ plot(dem);lines(TC,lwd = 4,col=2)
 
 paramsTable = read.csv(system.file("extdata/tuningParams/defult_params.csv",package = "TCHazaRds"))
 #calculate the wind hazard
-HAZ = TCHazaRdsWindFields(GEO_land=GEO_land,TC=TC,paramsTable=paramsTable)
-plot(min(HAZ$Pr))
 
-outdate = seq(strptime(TC$ISO_TIME[1],"\%Y-\%m-\%d \%H:\%M:\%S",tz="UTC"),
-              strptime(rev(TC$ISO_TIME)[1],"\%Y-\%m-\%d \%H:\%M:\%S",tz="UTC"),
-              3600)
+outdate = seq(strptime(TC$ISO_TIME[44],"\%Y-\%m-\%d \%H:\%M:\%S",tz="UTC"),
+              strptime(TC$ISO_TIME[46],"\%Y-\%m-\%d \%H:\%M:\%S",tz="UTC"),
+              3600*3)
 HAZi = TCHazaRdsWindFields(outdate=outdate,GEO_land=GEO_land,TC=TC,paramsTable=paramsTable)
 plot(min(HAZi$Pr))
 

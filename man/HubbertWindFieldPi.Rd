@@ -26,3 +26,4 @@ array with two columns for zonal and meridional wind speed vector-components.
 \description{
 Time series vortex Wind, wind vectors. Hubbert, G.D., G.J.Holland, L.M.Leslie and M.J.Manton, 1991: A Real - Time System for Forecasting Tropical Cyclone Storm Surges. *Weather and Forecasting*, **6 * *, 86 - 97
 }
+\keyword{internal}

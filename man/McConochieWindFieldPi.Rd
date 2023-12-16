@@ -28,3 +28,4 @@ array with two columns for zonal and meridional wind speed vector-components.
 \description{
 Time series vortex Wind, wind vectors. McConochie, J.D., T.A.Hardy and L.B.Mason, 2004: Modelling tropical cyclone over - water wind and pressure fields. Ocean Engineering, 31, 1757 - 1782.
 }
+\keyword{internal}

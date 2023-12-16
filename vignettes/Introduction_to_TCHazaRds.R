@@ -60,9 +60,11 @@ TC_sp = list("sp.lines",as(TC,"Spatial"),col="black")
 sp::spplot(HAZi,"Sw",at=ats,sp.layout = TC_sp)
 
 ## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------
-UV = as(c(HAZi["Uw"],HAZi["Vw"]),"Raster") #need to convert back to raster
-rasterVis::vectorplot(UV, isField='dXY', col.arrows='white', aspX=0.002,aspY=0.002,at=ats ,
-colorkey=list( at=ats), par.settings=viridisTheme)+latticeExtra::layer(sp.lines(as(TC,"Spatial"),col="red"))
+if (.Platform$OS.type == "windows"){
+  UV = as(c(HAZi["Uw"],HAZi["Vw"]),"Raster") #need to convert back to raster
+  rasterVis::vectorplot(UV, isField='dXY', col.arrows='white', aspX=0.002,aspY=0.002,at=ats ,
+  colorkey=list(at=ats), par.settings=viridisTheme)+latticeExtra::layer(sp.lines(as(TC,"Spatial"),col="red"))
+}
 
 ## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------
 HAZ = TCHazaRdsWindFields(GEO_land=GEO_land,TC=TC,paramsTable=paramsTable)
@@ -86,9 +88,11 @@ HAZts = TCHazaRdsWindTimeSereies(GEO_land=GEO_landp,TC=TC,paramsTable = paramsTa
 HAZtsi = TCHazaRdsWindTimeSereies(outdate = outdate,GEO_land=GEO_landp,TC=TC,paramsTable = paramsTable)
 
 main =  paste(TCi$NAME[1],TCi$SEASON[1],"at",GEO_landp$lons,GEO_landp$lats)
-suppressWarnings(with(HAZts,plot(date,Sw,format = "%b-%d %HZ",type="l",main = main,ylab = "Wind speed [m/s]")))
-with(HAZtsi,lines(date,Sw,col=2))
-legend("topleft",c("6 hrly","10 min interpolated"),col = c(1,2),lty=1)
+if (.Platform$OS.type == "windows"){ 
+  suppressWarnings(with(HAZts,plot(date,Sw,format = "%b-%d %HZ",type="l",main = main,ylab = "Wind speed [m/s]")))
+  with(HAZtsi,lines(date,Sw,col=2))
+  legend("topleft",c("6 hrly","10 min interpolated"),col = c(1,2),lty=1)
+}
 
 ## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------
 TCi$thetaFm = 90-returnBearing(TCi)
@@ -102,8 +106,8 @@ HAZie = extract(HAZi,pp,bind=TRUE)#,method = "bilinear")
 wcol = colorRampPalette(c("white","lightblue","blue","violet","purple"))
 #see ?terra::plot
 plot(HAZi,"Sw",levels=ats,col = wcol(13),range = range(ats),type="continuous",all_levels=TRUE)
-plot(HAZp,add=TRUE,cex=1.2)
-plot(HAZp,"Sw",levels=ats,col = wcol(13),range = range(ats),type="continuous",add=TRUE,border="grey")#,all_levels=TRUE)
+#plot(HAZp,add=TRUE,cex=1.2)
+plot(HAZp,"Sw",levels=ats,col = wcol(13),range = range(ats),type="continuous",border="grey")#,all_levels=TRUE)
 lines(TC)
 
 ## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------

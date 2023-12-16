@@ -48,5 +48,5 @@ TCi$PRES <- TCi$BOM_PRES
 paramsTable = read.csv(system.file("extdata/tuningParams/defult_params.csv",package = "TCHazaRds"))
 HAZts = TCHazaRdsWindTimeSereies(GEO_land=GEO_land,TC=TCi,paramsTable = paramsTable)
 main =  paste(TCi$NAME[1],TCi$SEASON[1],"at",GEO_land$lons,GEO_land$lats)
-with(HAZts,plot(date,Sw,format = "\%b-\%d \%H",type="l",main = main,ylab = "Wind speed [m/s]"))
+#with(HAZts,plot(date,Sw,format = "\%b-\%d \%H",type="l",main = main,ylab = "Wind speed [m/s]"))
 }

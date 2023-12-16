@@ -297,7 +297,7 @@ TCvectInterp = function(outdate = NULL, TC, paramsTable) {
 #' paramsTable = read.csv(system.file("extdata/tuningParams/defult_params.csv",package = "TCHazaRds"))
 #' HAZts = TCHazaRdsWindTimeSereies(GEO_land=GEO_land,TC=TCi,paramsTable = paramsTable)
 #' main =  paste(TCi$NAME[1],TCi$SEASON[1],"at",GEO_land$lons,GEO_land$lats)
-#' with(HAZts,plot(date,Sw,format = "%b-%d %H",type="l",main = main,ylab = "Wind speed [m/s]"))
+#' #with(HAZts,plot(date,Sw,format = "%b-%d %H",type="l",main = main,ylab = "Wind speed [m/s]"))
 TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, paramsTable) {
   # Extract parameters from the paramsTable and convert them into a data frame.
   params <- array(paramsTable$value, dim = c(1, length(paramsTable$value)))
@@ -618,12 +618,10 @@ TCHazaRdsWindField <- function(GEO_land, TC, paramsTable) {
 #'
 #' paramsTable = read.csv(system.file("extdata/tuningParams/defult_params.csv",package = "TCHazaRds"))
 #' #calculate the wind hazard
-#' HAZ = TCHazaRdsWindFields(GEO_land=GEO_land,TC=TC,paramsTable=paramsTable)
-#' plot(min(HAZ$Pr))
 #'
-#' outdate = seq(strptime(TC$ISO_TIME[1],"%Y-%m-%d %H:%M:%S",tz="UTC"),
-#'               strptime(rev(TC$ISO_TIME)[1],"%Y-%m-%d %H:%M:%S",tz="UTC"),
-#'               3600)
+#' outdate = seq(strptime(TC$ISO_TIME[44],"%Y-%m-%d %H:%M:%S",tz="UTC"),
+#'               strptime(TC$ISO_TIME[46],"%Y-%m-%d %H:%M:%S",tz="UTC"),
+#'               3600*3)
 #' HAZi = TCHazaRdsWindFields(outdate=outdate,GEO_land=GEO_land,TC=TC,paramsTable=paramsTable)
 #' plot(min(HAZi$Pr))
 #'
@@ -1025,15 +1023,15 @@ TCProfilePts = function(TC_line,Through_point=NULL,bear=NULL,length =200,step=2)
 #'
 #' #extract a profile/transect at right angles (90 degrees) from the TC heading/bearing direction
 #' pp <- TCProfilePts(TC_line = TCi,bear=TCi$thetaFm+90,length =100,step=1)
-#' plot(dem);lines(TCi,lwd = 4,col=2)
-#' points(pp)
+#' #plot(dem);lines(TCi,lwd = 4,col=2)
+#' #points(pp)
 #' GEO_land_v = extract(GEO_land,pp,bind=TRUE,method = "bilinear")
 #'
 #' paramsTable = read.csv(system.file("extdata/tuningParams/defult_params.csv",package = "TCHazaRds"))
 #' #calculate the wind hazard
 #' HAZ = TCHazaRdsWindProfile(GEO_land_v,TCi,paramsTable)
-#' plot(HAZ$radialdist,HAZ$Sw,type="l",xlab = "Radial distance [km]",ylab = "Wind speed [m/s]");grid()
-#' plot(HAZ,"Sw",type="continuous")
+#' #plot(HAZ$radialdist,HAZ$Sw,type="l",xlab = "Radial distance [km]",ylab = "Wind speed [m/s]");grid()
+#' #plot(HAZ,"Sw",type="continuous")
 #'
 TCHazaRdsWindProfile = function(GEO_land,TC,paramsTable){
   params <- array(paramsTable$value,dim = c(1,length(paramsTable$value)))

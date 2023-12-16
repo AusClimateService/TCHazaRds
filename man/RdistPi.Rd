@@ -22,3 +22,4 @@ two columns for distance in km and cartesian direction in degrees, counterclockw
 \description{
 Grid point time series of TC distance and direction.
 }
+\keyword{internal}

@@ -49,14 +49,14 @@ TCi$thetaFm = 90-returnBearing(TCi)
 
 #extract a profile/transect at right angles (90 degrees) from the TC heading/bearing direction
 pp <- TCProfilePts(TC_line = TCi,bear=TCi$thetaFm+90,length =100,step=1)
-plot(dem);lines(TCi,lwd = 4,col=2)
-points(pp)
+#plot(dem);lines(TCi,lwd = 4,col=2)
+#points(pp)
 GEO_land_v = extract(GEO_land,pp,bind=TRUE,method = "bilinear")
 
 paramsTable = read.csv(system.file("extdata/tuningParams/defult_params.csv",package = "TCHazaRds"))
 #calculate the wind hazard
 HAZ = TCHazaRdsWindProfile(GEO_land_v,TCi,paramsTable)
-plot(HAZ$radialdist,HAZ$Sw,type="l",xlab = "Radial distance [km]",ylab = "Wind speed [m/s]");grid()
-plot(HAZ,"Sw",type="continuous")
+#plot(HAZ$radialdist,HAZ$Sw,type="l",xlab = "Radial distance [km]",ylab = "Wind speed [m/s]");grid()
+#plot(HAZ,"Sw",type="continuous")
 
 }

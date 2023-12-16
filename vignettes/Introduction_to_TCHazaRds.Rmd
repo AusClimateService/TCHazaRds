@@ -48,7 +48,7 @@ TCi$thetaFm = 90-returnBearing(TCi) #direction of the heading of the TC (Cartesi
 
 ```
 
-In the above code chunk a simple track segment is defined, but historical TC tracks, e.g. from [IBTRACs](https://www.ncdc.noaa.gov/ibtracs/), can provide the input into the model. A few tracks are provided with the package, below TC Yasi is read in.
+In the above code chunk a simple track segment is defined, but historical TC tracks, e.g. from [IBTRACs]( https://www.ncei.noaa.gov/products/international-best-track-archive), can provide the input into the model. A few tracks are provided with the package, below TC Yasi is read in.
 
 ```{r}
 TC <- vect(system.file("extdata/YASI/YASI.shp", package="TCHazaRds"))
@@ -92,7 +92,7 @@ GEO_land = land_geometry(r,r)
 ```
 
 ## Output Wind Feild 
-Now that we have the three inputs (tracks, parameters and model output geometry) we can compute and plot the spatial wind hazard. See [Making maps in R](http://www.nickeubank.com/wp-content/uploads/2015/10/RGIS3_MakingMaps_part1_mappingVectorData.html#:~:text=spplot%20is%20an%20extension%20of,called%20%E2%80%9Cchloropleth%E2%80%9D%20maps) for plotting method. 
+Now that we have the three inputs (tracks, parameters and model output geometry) we can compute and plot the spatial wind hazard. See [Making maps in R](https://r.geocompx.org/adv-map.html) for plotting method. 
 
 ```{r, out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"}
 ats = seq(0, 65, length=14)
@@ -103,12 +103,14 @@ TC_sp = list("sp.lines",as(TC,"Spatial"),col="black")
 sp::spplot(HAZi,"Sw",at=ats,sp.layout = TC_sp)
 ```
 
-The package `rasterVis::` allows pretty spatial vector plots of the wind field via the `vectorplot` function.
+The package `rasterVis::` allows pretty spatial vector plots of the wind field via the `vectorplot` function (tested on MS-Windows machine).
 
 ```{r, out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"}
-UV = as(c(HAZi["Uw"],HAZi["Vw"]),"Raster") #need to convert back to raster
-rasterVis::vectorplot(UV, isField='dXY', col.arrows='white', aspX=0.002,aspY=0.002,at=ats ,
-colorkey=list( at=ats), par.settings=viridisTheme)+latticeExtra::layer(sp.lines(as(TC,"Spatial"),col="red"))
+if (.Platform$OS.type == "windows"){
+  UV = as(c(HAZi["Uw"],HAZi["Vw"]),"Raster") #need to convert back to raster
+  rasterVis::vectorplot(UV, isField='dXY', col.arrows='white', aspX=0.002,aspY=0.002,at=ats ,
+  colorkey=list(at=ats), par.settings=viridisTheme)+latticeExtra::layer(sp.lines(as(TC,"Spatial"),col="red"))
+}
 ```
 
 The hazard can be also calculated for the entire track too (by adding a `s` to the end of `TCHazaRdsWindField` to make it plural), and then the maximum wind speed at each grid cell can be plotted.
@@ -132,7 +134,7 @@ sp::spplot(max(HAZI$Sw),at=ats,sp.layout = TC_sp)
 ## Output wind time series  
 
 
-Time series data can be computed for a single location. Below is a comparison of the raw IBTrACS time step and the track interpolated to 10 minute intervals. 
+Time series data can be computed for a single location. Below is a comparison of the raw IBTrACS time step and the track interpolated to 10 minute intervals.(tested on MS-Windows machine) 
 
 ```{r, out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"}
 
@@ -145,9 +147,11 @@ HAZts = TCHazaRdsWindTimeSereies(GEO_land=GEO_landp,TC=TC,paramsTable = paramsTa
 HAZtsi = TCHazaRdsWindTimeSereies(outdate = outdate,GEO_land=GEO_landp,TC=TC,paramsTable = paramsTable)
 
 main =  paste(TCi$NAME[1],TCi$SEASON[1],"at",GEO_landp$lons,GEO_landp$lats)
-suppressWarnings(with(HAZts,plot(date,Sw,format = "%b-%d %HZ",type="l",main = main,ylab = "Wind speed [m/s]")))
-with(HAZtsi,lines(date,Sw,col=2))
-legend("topleft",c("6 hrly","10 min interpolated"),col = c(1,2),lty=1)
+if (.Platform$OS.type == "windows"){ 
+  suppressWarnings(with(HAZts,plot(date,Sw,format = "%b-%d %HZ",type="l",main = main,ylab = "Wind speed [m/s]")))
+  with(HAZtsi,lines(date,Sw,col=2))
+  legend("topleft",c("6 hrly","10 min interpolated"),col = c(1,2),lty=1)
+}
 ```
 
 ## Output wind Profile 
@@ -166,8 +170,8 @@ HAZie = extract(HAZi,pp,bind=TRUE)#,method = "bilinear")
 wcol = colorRampPalette(c("white","lightblue","blue","violet","purple"))
 #see ?terra::plot
 plot(HAZi,"Sw",levels=ats,col = wcol(13),range = range(ats),type="continuous",all_levels=TRUE)
-plot(HAZp,add=TRUE,cex=1.2)
-plot(HAZp,"Sw",levels=ats,col = wcol(13),range = range(ats),type="continuous",add=TRUE,border="grey")#,all_levels=TRUE)
+#plot(HAZp,add=TRUE,cex=1.2)
+plot(HAZp,"Sw",levels=ats,col = wcol(13),range = range(ats),type="continuous",border="grey")#,all_levels=TRUE)
 lines(TC)
 ```
 
