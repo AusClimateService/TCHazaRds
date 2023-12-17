@@ -1315,7 +1315,7 @@ NumericMatrix McConochieWindField(float rMax, float vMax, float vFm, float theta
   float thetaFmRAD;
   float piOn180 = pi / 180.0f;
   thetaFmRAD = thetaFm * piOn180;
-  rMax = rMax;
+  //rMax = rMax;
   float sf;
   sf = f/fabs(f);
   thetaMaxfabsolute = thetaFmRAD + thetaMax*-1.0f*sf;

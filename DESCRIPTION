@@ -5,7 +5,7 @@ Version: 1.0
 Authors@R: person("Julian", "O'Grady", role = c("aut", "cre"),email = "julian.ogrady@csiro.au",comment = c(ORCID = "http://orcid.org/0000-0003-3552-9193"))
 Date: 2023-12-16
 Maintainer: Julian O'Grady <julian.ogrady@csiro.au>
-Description: Methods for generating modelled parametric Tropical Cyclone (TC) spatial hazard fields and time series output at point locations from TC tracks.    R's compatibility to simply use fast Cpp code via the Rcpp package and the wide range spatial analysis tools via the terra package makes it an attractive open source environment to study TCs.    This package estimates TC vortex wind and pressure fields using parametric equations coded up in python by TCRM <https://github.com/GeoscienceAustralia/tcrm> and then coded up in Cuda cpp by TCwindgen <https://github.com/CyprienBosserelle/TCwindgen>.
+Description: Methods for generating modelled parametric Tropical Cyclone (TC) spatial hazard fields and time series output at point locations from TC tracks.    R's compatibility to simply use fast 'cpp' code via the 'Rcpp' package and the wide range spatial analysis tools via the 'terra' package makes it an attractive open source environment to study 'TCs'.    This package estimates TC vortex wind and pressure fields using parametric equations originally coded up in python by 'TCRM' <https://github.com/GeoscienceAustralia/tcrm> and then coded up in 'Cuda' 'cpp' by 'TCwindgen' <https://github.com/CyprienBosserelle/TCwindgen>.
 URL: https://github.com/AusClimateService/TCHazaRds
 License: GPL (>= 3)
 Imports: Rcpp (>= 1.0.7), terra, utils, stats, geosphere, ncdf4, methods, sp, rasterVis, raster, latticeExtra
