@@ -700,31 +700,6 @@ returnBearing <- function(x){
 }
 
 
-
-
-
-#' Title Read All netcdf Variables Into a list()
-
-#'
-#' @param infile Name of the existing netCDF file to be opened.
-#'
-#' @return a list of lists with netCDF variables read by the ncdf4 package.
-#' @export
-#'
-readncs = function(infile){
-  print(paste("reading",infile))
-  nc = ncdf4::nc_open(infile)
-  nam = names(nc$var)
-  out = list()
-  out$name = infile
-  for(nami in 1:length(nam)) out[[nam[nami]]] = ncdf4::ncvar_get(nc,nam[nami])
-  out$dim = nc$dim
-  ncdf4::nc_close(nc)
-  print("read")
-  return(out)
-}
-
-
 #' Compute the  Tropical Cyclone Radius of Maximum Winds
 #'
 #' @param rMaxModel 0=Powell et.al.(2005),1=McInnes et.al.(2014),2=Willoughby & Rahn (2004),  3=Vickery & Wadhera (2008), 4=Takagi & Wu (2016), 5 = Chavas & Knaff (2022)
