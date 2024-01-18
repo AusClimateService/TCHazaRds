@@ -10,7 +10,7 @@ status](https://www.r-pkg.org/badges/version/TCHazaRds)](https://cran.r-project.
 ## Installation
 
 ### For Windows
-`TCHazaRds` is now on [CRAN](https://cran.r-project.org/package=TCHazaRds) and can downloaded with
+`TCHazaRds` is now on [CRAN](https://cran.r-project.org/package=TCHazaRds) and can downloaded in [R](https://www.r-project.org/) with
 
 ```
 install.packages("TCHazaRds",dependencies = TRUE)
