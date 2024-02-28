@@ -664,6 +664,22 @@ NumericMatrix KepertWindFieldPi(NumericVector rMax, NumericVector vMax, NumericV
 	// Kepert, J., 2001: The Dynamics of Boundary Layer Jets within the
 	//Tropical Cyclone Core.Part I : Linear Theory.J.Atmos.Sci., 58,
 	//	2469 - 2484
+	
+	//Orginal code { Written Jeff Kepert, Bureau of Meteorology, 1998-2000.
+        //Copyright the Bureau of Meteorology.
+        //Please do not distribute orignal work without my knowledge.
+
+        //The model is, so far as I know, robust, except if the storm is
+        //close to inertially neutral (e.g. b too big). Note that it was written
+        //to understand the dynamics, not to make accurate predictions -  
+        //the constants (C, K, etc) have not been tuned to observations.
+        //Note also that because of a linearisation in the derivation, the
+        //model does not produce the correct limit in the limit r -> infinity.
+        //This code uses a Holland (1980) parametric profile, but should also
+        //work with other reasonable parametric profiles.
+        //Created on Fri Oct  2 09:53:29 2015. Port from matlab code.
+        //@author: Jeff }
+
 	NumericVector V = VZ( _ , 0 );
 	int n = V.size();
   NumericMatrix UwVw(n,2);
@@ -1390,6 +1406,22 @@ NumericMatrix KepertWindField(float rMax, float vMax, float vFm, float thetaFm, 
   // Kepert, J., 2001: The Dynamics of Boundary Layer Jets within the
   //Tropical Cyclone Core.Part I : Linear Theory.J.Atmos.Sci., 58,
   //	2469 - 2484
+	
+  //Orginal code { Written Jeff Kepert, Bureau of Meteorology, 1998-2000.
+  //Copyright the Bureau of Meteorology.
+  //Please do not distribute orignal work without my knowledge.
+
+  //The model is, so far as I know, robust, except if the storm is
+  //close to inertially neutral (e.g. b too big). Note that it was written
+  //to understand the dynamics, not to make accurate predictions -  
+  //the constants (C, K, etc) have not been tuned to observations.
+  //Note also that because of a linearisation in the derivation, the
+  //model does not produce the correct limit in the limit r -> infinity.
+  //This code uses a Holland (1980) parametric profile, but should also
+  //work with other reasonable parametric profiles.
+  //Created on Fri Oct  2 09:53:29 2015. Port from matlab code.
+  //@author: Jeff }
+  
   NumericVector V = VZ( _ , 0 );
   int n = V.size();
   NumericMatrix UwVw(n,2);
