@@ -9,3 +9,5 @@
 ^doc$
 ^Meta$
 ^CRAN-SUBMISSION$
+^\\.github$
+^\.github$
