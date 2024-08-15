@@ -263,6 +263,7 @@ TCvectInterp = function(outdate = NULL, TC, paramsTable) {
 #' @param GEO_land dataframe hazard geometry generated with land_geometry
 #' @param TC SpatVector of Tropical cyclone track parameters
 #' @param paramsTable Global parameters to compute TC Hazards.
+#' @param returnWaves Return ocean wave parameters (default = FALSE)
 #'
 #' @return list() containing a timeseries
 #'
@@ -281,6 +282,9 @@ TCvectInterp = function(outdate = NULL, TC, paramsTable) {
 #' | CP      | TC central Pressure  |  hPa  |
 #' | dPdt      | change in TC CP per hour  |  hPa/hr  |
 #' | vFm      | velocity of TC forward motion  |  m/s  |
+#' | Hs0    | Deep water significant wave height | m |
+#' | Tp0    | Deep water Peak wave period | s |
+#' | Dp0    | The peak direction in which wave are heading | deg clockwise from true north. |
 #'
 #' @details The function calculates wind speed and direction time series from a tropical cyclone track using various wind profile models.
 #' @md
@@ -298,7 +302,7 @@ TCvectInterp = function(outdate = NULL, TC, paramsTable) {
 #' HAZts = TCHazaRdsWindTimeSereies(GEO_land=GEO_land,TC=TCi,paramsTable = paramsTable)
 #' main =  paste(TCi$NAME[1],TCi$SEASON[1],"at",GEO_land$lons,GEO_land$lats)
 #' #with(HAZts,plot(date,Sw,format = "%b-%d %H",type="l",main = main,ylab = "Wind speed [m/s]"))
-TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, paramsTable) {
+TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, paramsTable,returnWaves = FALSE) {
   # Extract parameters from the paramsTable and convert them into a data frame.
   params <- array(paramsTable$value, dim = c(1, length(paramsTable$value)))
   colnames(params) <- paramsTable$param
@@ -320,7 +324,7 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
   # Calculate distance from the center to each grid point
   Rlam <- with(TRACK, RdistPi(Gridlon = lon, Gridlat = lat, TClon = TClons, TClat = TClats))
   R <- Rlam[, 1]
-
+  lam <- Rlam[,2]
   # Calculate pressure based on pressure profile model
   if (params$pressureProfileModel == 0)
     P <- with(TRACK, HollandPressureProfilePi(rMax = rMax, dP = dPs, cP = cPs, beta = beta, R = R))
@@ -342,11 +346,11 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
 
   # Calculate wind vortex model
   if (params$windVortexModel == 0)
-    UV <- with(TRACK, KepertWindFieldPi(rMax = rMax, vMax = vMax, vFm = vFms, thetaFm = thetaFms, f = fs, Rlam = Rlam, VZ = VZ))
+    UV <- with(TRACK, KepertWindFieldPi(rMax = rMax, vMax = vMax, vFm = vFms, thetaFm = thetaFms, f = fs, Rlam = Rlam, VZ = VZ, surface = params$surface))
   if (params$windVortexModel == 1)
-    UV <- with(TRACK, HubbertWindFieldPi(rMax = rMax, vFm = vFms, thetaFm = thetaFms, f = fs, Rlam = Rlam, V = V))
+    UV <- with(TRACK, HubbertWindFieldPi(rMax = rMax, vFm = vFms, thetaFm = thetaFms, f = fs, Rlam = Rlam, V = V, surface = params$surface))
   if (params$windVortexModel == 2)
-    UV <- with(TRACK, McConochieWindFieldPi(rMax = rMax, vMax = vMax, vFm = vFms, thetaFm = thetaFms, Rlam = Rlam, V = V, f = fs[1]))
+    UV <- with(TRACK, McConochieWindFieldPi(rMax = rMax, vMax = vMax, vFm = vFms, thetaFm = thetaFms, Rlam = Rlam, V = V, f = fs[1], surface = params$surface))
 
   Uw <- UV[, 1]
   Vw <- UV[, 2]
@@ -370,7 +374,35 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
 
   Uw <- cos(Va) * Sw
   Vw <- sin(Va) * Sw
-
+  if(returnWaves){  
+    # significant wave heights OGrady 2024 JCR eq 1
+    Sww = Sw
+    Sww[R < TRACK$rMax & Sww < 10] = 10 #lift winds in the eye so there are always waves
+    dP = params$eP-TRACK$PRES
+    Hs0 = params$Wave_a*Sww^params$Wave_x + params$Wave_b*TRACK$dPs + params$Wave_c*TRACK$vFm
+    Hs0[Hs0 < 0] = 0
+    Hs0[GEO_land$dem > 0] = NA
+    Hs0[R < TRACK$rMax & Hs0 < 2] = 2
+    # wave period Young 2017 eq 4
+    e0 = 96.04*(Hs0^2/16)/(Sww^4)
+    nu0 = (e0/6.365e-6)^-0.303
+    Tp0 = Sww/(nu0*9.8)
+    
+    #Wave directions
+    fs = sign(TRACK$f[1])
+    d = fs*c(0.0,   22.5,   67.5,  112.5,  157.5,180,-180, -157.5, -112.5,  -67.5,  -22.5,  -0.01)
+    #Wave ang outward from the wind Tamizi & Young 2020 (Pers comms)
+    TRACK$thetaFm[TRACK$thetaFm < -180] =  360+TRACK$thetaFm[TRACK$thetaFm < -180]
+    TRACK$thetaFm[TRACK$thetaFm > 180] = -360+TRACK$thetaFm[TRACK$thetaFm >= 180]
+    wwang = fs*c(54,52,36,27,16,56,56,92,104,79,56,54)
+    ang = (90.0-lam) - (90-TRACK$thetaFm) #orientate clockwise to the forward motion thetaFm in degrees
+    ang[ang < -180] =  360+ang[ang < -180]
+    ang[ang >= 180] = -360+ang[ang >= 180]
+    p2a = approx(d,wwang,ang)$y
+    Dp0 = Dw-180+p2a
+    Dp0[Dp0 < 0] = 360 + Dp0[Dp0 < 0]
+    Dp0[GEO_land$dem > 0] = NA
+  }
   # Create and populate the output list
   v <- list() # time series list
   v$date <- TRACK$odatei + strptime("1970-01-01 00:00", "%Y-%m-%d %H:%M", tz = "UTC")
@@ -380,7 +412,7 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
   v$Dw <- Dw
   v$P <- P
   v$R <- R
-  v$lam <- Rlam[,2]
+  v$lam <- lam
   v$rMax <- TRACK$rMax
   v$vMax <- TRACK$vMax
   v$beta <- TRACK$beta
@@ -389,7 +421,11 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
   v$TClat <- TRACK$TClats
   v$vFm <- TRACK$vFm
   v$thetaFm <- TRACK$thetaFm
-
+  if(returnWaves){
+    v$Hs0 <- Hs0
+    v$Tp0 <- Tp0
+   v$Dp0 <- Dp0
+  }
   return(v)
 }
 
@@ -398,6 +434,7 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
 #' @param GEO_land SpatVector or dataframe hazard geometry generated with land_geometry
 #' @param TC SpatVector or data.frame of Tropical cyclone track parameters for a single time step.
 #' @param paramsTable Global parameters to compute TC Hazards.
+#' @param returnWaves Return ocean wave parameters (default = FALSE)
 #'
 #' @return SpatRaster with the following attributes
 #'
@@ -406,10 +443,13 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
 #' | abbreviated attribute       | description     | units |
 #' | ------------- | -------------|  -------------|
 #' | P      | Atmospheric pressure | hPa  |
-#' | Uw      | Meridional  wind speed | m/s |
-#' | Vw      | Zonal wind speed | m/s  |
+#' | Uw     | Meridional  wind speed | m/s |
+#' | Vw     | Zonal wind speed | m/s  |
 #' | Sw     | Wind speed | m/s  |
 #' | Dw     | The direction from which wind originates | deg clockwise from true north.   |
+#' | Hs0    | Deep water significant wave height | m |
+#' | Tp0    | Deep water Peak wave period | s |
+#' | Dp0    | The peak direction in which wave are heading | deg clockwise from true north. |
 #'
 #' @md
 #'
@@ -447,7 +487,7 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
 #' #vectorplot(UV, isField='dXY', col.arrows='white', aspX=0.002,aspY=0.002,at=ats ,
 #' #colorkey=list( at=ats), par.settings=viridisTheme)
 #'
-TCHazaRdsWindField <- function(GEO_land, TC, paramsTable) {
+TCHazaRdsWindField <- function(GEO_land, TC, paramsTable,returnWaves = FALSE) {
   # Extract parameters from paramsTable
   params <- array(paramsTable$value, dim = c(1, length(paramsTable$value)))
   colnames(params) <- paramsTable$param
@@ -544,6 +584,41 @@ TCHazaRdsWindField <- function(GEO_land, TC, paramsTable) {
   Uw <- cos(Va) * Sw
   Vw <- sin(Va) * Sw
 
+  R <- ept
+  terra::values(R) <- Rlam[,1]
+  lam <- ept
+  terra::values(lam) <- Rlam[,2]
+  if(returnWaves){  
+    # significant wave heights OGrady 2024 JCR eq 1
+    Sww = Sw
+    Sww[R < TRACK$rMax & Sww < 10] = 10 #lift winds in the eye so there are always waves
+    dP = params$eP-TRACK$PRES
+    Hs0 = params$Wave_a*Sww^params$Wave_x + params$Wave_b*TRACK$dPs + params$Wave_c*TRACK$vFm
+    Hs0[Hs0 <0] = 0
+    Hs0[GEO_land$dem > 0] = NA
+    Hs0[R < TRACK$rMax & Hs0 < 2] = 2
+    # wave period Young 2017 eq 4
+    e0 = 96.04*(Hs0^2/16)/(Sww^4)
+    nu0 = (e0/6.365e-6)^-0.303
+    Tp0 = Sww/(nu0*9.8)
+    
+    #Wave directions
+    fs = sign(TRACK$f)
+    d = fs*c(0.0,   22.5,   67.5,  112.5,  157.5,180,-180, -157.5, -112.5,  -67.5,  -22.5,  -0.01)
+    #Wave ang outward from the wind Tamizi & Young 2020 (Pers comms)
+    TRACK$thetaFm[TRACK$thetaFm < -180] =  360+TRACK$thetaFm[TRACK$thetaFm < -180]
+    TRACK$thetaFm[TRACK$thetaFm > 180] = -360+TRACK$thetaFm[TRACK$thetaFm >= 180]
+    wwang = fs*c(54,52,36,27,16,56,56,92,104,79,56,54)
+    ang = (90.0-lam) - (90-TRACK$thetaFm) #orientate clockwise to the forward motion thetaFm in degrees
+    ang[ang < -180] =  360+ang[ang < -180]
+    ang[ang >= 180] = -360+ang[ang >= 180]
+    p2av = approx(d,wwang,values(ang))$y
+    p2a <- ept
+    terra::values(p2a) <- p2av
+    Dp0 = Dw-180+p2a
+    Dp0[Dp0 < 0] = 360 + Dp0[Dp0 < 0]
+    Dp0[GEO_land$dem > 0] = NA
+  }
   # Create a raster stack with wind field components
   terra::time(Pr) <- indate
   terra::units(Pr) <- "hPa"
@@ -564,11 +639,31 @@ TCHazaRdsWindField <- function(GEO_land, TC, paramsTable) {
   terra::time(Dw) <- indate
   terra::units(Dw) <- "Deg"
   terra::longnames(Dw) <- "wind_direction"
-
-  rl <- list(Pr, Uw, Vw, Sw, Dw)
-  rout <- terra::rast(rl)
-  names(rout) <- c("Pr", "Uw", "Vw", "Sw", "Dw")
-
+  
+  if(!returnWaves){
+    rl <- list(Pr, Uw, Vw, Sw, Dw)
+    rout <- terra::rast(rl)
+    names(rout) <- c("Pr", "Uw", "Vw", "Sw", "Dw")
+    
+  }
+  
+  if(returnWaves){  
+    terra::time(Hs0) <- indate
+    terra::units(Hs0) <- "m"
+    terra::longnames(Hs0) <- "Deep_water_significant_wave_height"
+    
+    terra::time(Tp0) <- indate
+    terra::units(Tp0) <- "s"
+    terra::longnames(Tp0) <- "peak_wave_period"
+  
+    terra::time(Dp0) <- indate
+    terra::units(Dp0) <- "Deg"
+    terra::longnames(Dp0) <- "peak_wave_direction"
+  
+    rl <- list(Pr, Uw, Vw, Sw, Dw, Hs0, Tp0,Dp0)
+    rout <- terra::rast(rl)
+    names(rout) <- c("Pr", "Uw", "Vw", "Sw", "Dw","Hs0", "Tp0","Dp0")
+  }
   return(rout)
 }
 
@@ -580,6 +675,8 @@ TCHazaRdsWindField <- function(GEO_land, TC, paramsTable) {
 #' @param paramsTable Global parameters to compute TC Hazards
 #' @param outfile character. Output netcdf filename
 #' @param overwrite TRUE/FALSE, option to overwrite outfile
+#' @param returnWaves Return ocean wave parameters (default = FALSE)
+#' 
 #' @return SpatRasterDataset with the following attributes.
 #'
 #'
@@ -591,6 +688,9 @@ TCHazaRdsWindField <- function(GEO_land, TC, paramsTable) {
 #' | Vw      | Zonal wind speed | m/s  |
 #' | Sw     | Wind speed | m/s  |
 #' | Dw     | The direction from which wind originates | deg clockwise from true north  |
+#' | Hs0    | Deep water significant wave height | m |
+#' | Tp0    | Deep water Peak wave period | s |
+#' | Dp0    | The peak direction in which wave are heading | deg clockwise from true north. |
 #'
 #' @md
 #'
@@ -625,7 +725,7 @@ TCHazaRdsWindField <- function(GEO_land, TC, paramsTable) {
 #' HAZi = TCHazaRdsWindFields(outdate=outdate,GEO_land=GEO_land,TC=TC,paramsTable=paramsTable)
 #' plot(min(HAZi$Pr))
 #'
-TCHazaRdsWindFields <- function(outdate = NULL, GEO_land, TC, paramsTable, outfile = NULL, overwrite = FALSE) {
+TCHazaRdsWindFields <- function(outdate = NULL, GEO_land, TC, paramsTable, outfile = NULL, overwrite = FALSE,returnWaves = FALSE) {
   # Extract and format the parameters
   params <- data.frame(t(paramsTable$value))
   colnames(params) <- paramsTable$param
@@ -648,7 +748,7 @@ TCHazaRdsWindFields <- function(outdate = NULL, GEO_land, TC, paramsTable, outfi
 
   # Compute wind fields for each time step
   s <- which(!is.na(TRACK$cPs))
-  HAZ_l <- lapply(s, function(x) TCHazaRdsWindField(GEO_land = GEO_land, TC = TRACK[x,], paramsTable = paramsTable))
+  HAZ_l <- lapply(s, function(x) TCHazaRdsWindField(GEO_land = GEO_land, TC = TRACK[x,], paramsTable = paramsTable,returnWaves = returnWaves))
 
   # Extract wind field components and create spatial data sets
   Pr <- terra::rast(lapply(HAZ_l, function(x) x$Pr))
@@ -656,18 +756,31 @@ TCHazaRdsWindFields <- function(outdate = NULL, GEO_land, TC, paramsTable, outfi
   Vw <- terra::rast(lapply(HAZ_l, function(x) x$Vw))
   Sw <- terra::rast(lapply(HAZ_l, function(x) x$Sw))
   Dw <- terra::rast(lapply(HAZ_l, function(x) x$Dw))
+  if(returnWaves){
+    Hs0 <- terra::rast(lapply(HAZ_l, function(x) x$Hs0))
+    Tp0 <- terra::rast(lapply(HAZ_l, function(x) x$Tp0))
+    Dp0 <- terra::rast(lapply(HAZ_l, function(x) x$Dp0))
+  }
 
   # Combine spatial data sets into a single sds object
-  HAZs <- terra::sds(list(Pr = Pr, Uw = Uw, Vw = Vw, Sw = Sw, Dw = Dw))
-  terra::varnames(HAZs) <- c("Pr", "Uw", "Vw", "Sw", "Dw")
-  terra::longnames(HAZs) <- c("air_pressure_at_sea_level", "eastward_wind", "northward_wind", "wind_speed", "wind_direction")
-  terra::units(HAZs) <- c("hPa", "m/s", "m/s", "m/s", "m/s")
-
+  if(!returnWaves){
+    HAZs <- terra::sds(list(Pr = Pr, Uw = Uw, Vw = Vw, Sw = Sw, Dw = Dw))
+    terra::varnames(HAZs) <- c("Pr", "Uw", "Vw", "Sw", "Dw")
+    terra::longnames(HAZs) <- c("air_pressure_at_sea_level", "eastward_wind", "northward_wind", "wind_speed", "wind_direction")
+    terra::units(HAZs) <- c("hPa", "m/s", "m/s", "m/s", "deg")
+  }
+  if(returnWaves){
+    HAZs <- terra::sds(list(Pr = Pr, Uw = Uw, Vw = Vw, Sw = Sw, Dw = Dw, Hs0 = Hs0, Tp0 = Tp0, Dp0 = Dp0))
+    terra::varnames(HAZs) <- c("Pr", "Uw", "Vw", "Sw", "Dw","Hs0","Tp0","Dp0")
+    terra::longnames(HAZs) <- c("air_pressure_at_sea_level", "eastward_wind", "northward_wind", "wind_speed", "wind_direction","Deep_water_significant_wave_height","peak_period","peak_wave_direction")
+    terra::units(HAZs) <- c("hPa", "m/s", "m/s", "m/s", "deg","m","s","deg")
+  }
+  
+  
   # Write output to a file if provided
   if (!is.null(outfile)) {
     terra::writeCDF(HAZs, filename = outfile, overwrite = overwrite)
   }
-
   return(HAZs)
 }
 

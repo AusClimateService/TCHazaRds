@@ -4,7 +4,7 @@
 \alias{HubbertWindFieldPi}
 \title{Hubbert Wind Field Time Series}
 \usage{
-HubbertWindFieldPi(f, rMax, vFm, thetaFm, Rlam, V)
+HubbertWindFieldPi(f, rMax, vFm, thetaFm, Rlam, V, surface)
 }
 \arguments{
 \item{f}{single coriolis parameter at the centre of TC in hz}
@@ -18,6 +18,8 @@ HubbertWindFieldPi(f, rMax, vFm, thetaFm, Rlam, V)
 \item{Rlam}{two columns for distances and direction from grid points to TC centre in km}
 
 \item{V}{velocity profile}
+
+\item{surface}{equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.}
 }
 \value{
 array with two columns for zonal and meridional wind speed vector-components.
@@ -26,4 +28,3 @@ array with two columns for zonal and meridional wind speed vector-components.
 \description{
 Time series vortex Wind, wind vectors. Hubbert, G.D., G.J.Holland, L.M.Leslie and M.J.Manton, 1991: A Real - Time System for Forecasting Tropical Cyclone Storm Surges. *Weather and Forecasting*, **6 * *, 86 - 97
 }
-\keyword{internal}

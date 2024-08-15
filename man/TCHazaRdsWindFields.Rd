@@ -10,7 +10,8 @@ TCHazaRdsWindFields(
   TC,
   paramsTable,
   outfile = NULL,
-  overwrite = FALSE
+  overwrite = FALSE,
+  returnWaves = FALSE
 )
 }
 \arguments{
@@ -25,6 +26,8 @@ TCHazaRdsWindFields(
 \item{outfile}{character. Output netcdf filename}
 
 \item{overwrite}{TRUE/FALSE, option to overwrite outfile}
+
+\item{returnWaves}{Return ocean wave parameters (default = FALSE)}
 }
 \value{
 SpatRasterDataset with the following attributes.\tabular{lll}{
@@ -34,6 +37,9 @@ SpatRasterDataset with the following attributes.\tabular{lll}{
    Vw \tab Zonal wind speed \tab m/s \cr
    Sw \tab Wind speed \tab m/s \cr
    Dw \tab The direction from which wind originates \tab deg clockwise from true north \cr
+   Hs0 \tab Deep water significant wave height \tab m \cr
+   Tp0 \tab Deep water Peak wave period \tab s \cr
+   Dp0 \tab The peak direction in which wave are heading \tab deg clockwise from true north. \cr
 }
 }
 \description{

@@ -4,7 +4,7 @@
 \alias{KepertWindFieldPi}
 \title{Kepert Wind Field}
 \usage{
-KepertWindFieldPi(rMax, vMax, vFm, thetaFm, f, Rlam, VZ)
+KepertWindFieldPi(rMax, vMax, vFm, thetaFm, f, Rlam, VZ, surface)
 }
 \arguments{
 \item{rMax}{radius of maximum winds in km}
@@ -20,6 +20,8 @@ KepertWindFieldPi(rMax, vMax, vFm, thetaFm, f, Rlam, VZ)
 \item{Rlam}{two columns for distances and direction from grid points to TC centre in km}
 
 \item{VZ}{array two columns velocity then vorticity}
+
+\item{surface}{equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.}
 }
 \value{
 array with two columns for zonal and meridional wind speed vector-components.
@@ -28,4 +30,3 @@ array with two columns for zonal and meridional wind speed vector-components.
 \description{
 Time series vortex Wind, wind vectors. Kepert, J., 2001: The Dynamics of Boundary Layer Jets within the Tropical Cyclone Core.Part I : Linear Theory.J.Atmos.Sci., 58, 2469 - 2484
 }
-\keyword{internal}

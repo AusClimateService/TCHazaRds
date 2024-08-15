@@ -30,4 +30,3 @@ array with two columns for zonal and meridional wind speed vector-components.
 \description{
 Grid point vortex Wind field, wind vectors. Kepert, J., 2001: The Dynamics of Boundary Layer Jets within the Tropical Cyclone Core.Part I : Linear Theory.J.Atmos.Sci., 58, 2469 - 2484
 }
-\keyword{internal}

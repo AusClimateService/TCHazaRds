@@ -4,7 +4,13 @@
 \alias{TCHazaRdsWindTimeSereies}
 \title{Compute the Wind Hazards Associated Over the Period of a TCs Event at one Given Location}
 \usage{
-TCHazaRdsWindTimeSereies(outdate = NULL, GEO_land = NULL, TC, paramsTable)
+TCHazaRdsWindTimeSereies(
+  outdate = NULL,
+  GEO_land = NULL,
+  TC,
+  paramsTable,
+  returnWaves = FALSE
+)
 }
 \arguments{
 \item{outdate}{array of POSITx date times to linearly interpolate TC track,optional.}
@@ -14,6 +20,8 @@ TCHazaRdsWindTimeSereies(outdate = NULL, GEO_land = NULL, TC, paramsTable)
 \item{TC}{SpatVector of Tropical cyclone track parameters}
 
 \item{paramsTable}{Global parameters to compute TC Hazards.}
+
+\item{returnWaves}{Return ocean wave parameters (default = FALSE)}
 }
 \value{
 list() containing a timeseries\tabular{lll}{
@@ -30,6 +38,9 @@ list() containing a timeseries\tabular{lll}{
    CP \tab TC central Pressure \tab hPa \cr
    dPdt \tab change in TC CP per hour \tab hPa/hr \cr
    vFm \tab velocity of TC forward motion \tab m/s \cr
+   Hs0 \tab Deep water significant wave height \tab m \cr
+   Tp0 \tab Deep water Peak wave period \tab s \cr
+   Dp0 \tab The peak direction in which wave are heading \tab deg clockwise from true north. \cr
 }
 }
 \description{

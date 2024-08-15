@@ -135,8 +135,8 @@ BEGIN_RCPP
 END_RCPP
 }
 // HubbertWindFieldPi
-NumericMatrix HubbertWindFieldPi(NumericVector f, NumericVector rMax, NumericVector vFm, NumericVector thetaFm, NumericMatrix Rlam, NumericVector V);
-RcppExport SEXP _TCHazaRds_HubbertWindFieldPi(SEXP fSEXP, SEXP rMaxSEXP, SEXP vFmSEXP, SEXP thetaFmSEXP, SEXP RlamSEXP, SEXP VSEXP) {
+NumericMatrix HubbertWindFieldPi(NumericVector f, NumericVector rMax, NumericVector vFm, NumericVector thetaFm, NumericMatrix Rlam, NumericVector V, float surface);
+RcppExport SEXP _TCHazaRds_HubbertWindFieldPi(SEXP fSEXP, SEXP rMaxSEXP, SEXP vFmSEXP, SEXP thetaFmSEXP, SEXP RlamSEXP, SEXP VSEXP, SEXP surfaceSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -146,13 +146,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type thetaFm(thetaFmSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type Rlam(RlamSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type V(VSEXP);
-    rcpp_result_gen = Rcpp::wrap(HubbertWindFieldPi(f, rMax, vFm, thetaFm, Rlam, V));
+    Rcpp::traits::input_parameter< float >::type surface(surfaceSEXP);
+    rcpp_result_gen = Rcpp::wrap(HubbertWindFieldPi(f, rMax, vFm, thetaFm, Rlam, V, surface));
     return rcpp_result_gen;
 END_RCPP
 }
 // McConochieWindFieldPi
-NumericMatrix McConochieWindFieldPi(NumericVector rMax, NumericVector vMax, NumericVector vFm, NumericVector thetaFm, NumericMatrix Rlam, NumericVector V, float f);
-RcppExport SEXP _TCHazaRds_McConochieWindFieldPi(SEXP rMaxSEXP, SEXP vMaxSEXP, SEXP vFmSEXP, SEXP thetaFmSEXP, SEXP RlamSEXP, SEXP VSEXP, SEXP fSEXP) {
+NumericMatrix McConochieWindFieldPi(NumericVector rMax, NumericVector vMax, NumericVector vFm, NumericVector thetaFm, NumericMatrix Rlam, NumericVector V, float f, float surface);
+RcppExport SEXP _TCHazaRds_McConochieWindFieldPi(SEXP rMaxSEXP, SEXP vMaxSEXP, SEXP vFmSEXP, SEXP thetaFmSEXP, SEXP RlamSEXP, SEXP VSEXP, SEXP fSEXP, SEXP surfaceSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -163,13 +164,14 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericMatrix >::type Rlam(RlamSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type V(VSEXP);
     Rcpp::traits::input_parameter< float >::type f(fSEXP);
-    rcpp_result_gen = Rcpp::wrap(McConochieWindFieldPi(rMax, vMax, vFm, thetaFm, Rlam, V, f));
+    Rcpp::traits::input_parameter< float >::type surface(surfaceSEXP);
+    rcpp_result_gen = Rcpp::wrap(McConochieWindFieldPi(rMax, vMax, vFm, thetaFm, Rlam, V, f, surface));
     return rcpp_result_gen;
 END_RCPP
 }
 // KepertWindFieldPi
-NumericMatrix KepertWindFieldPi(NumericVector rMax, NumericVector vMax, NumericVector vFm, NumericVector thetaFm, NumericVector f, NumericMatrix Rlam, NumericMatrix VZ);
-RcppExport SEXP _TCHazaRds_KepertWindFieldPi(SEXP rMaxSEXP, SEXP vMaxSEXP, SEXP vFmSEXP, SEXP thetaFmSEXP, SEXP fSEXP, SEXP RlamSEXP, SEXP VZSEXP) {
+NumericMatrix KepertWindFieldPi(NumericVector rMax, NumericVector vMax, NumericVector vFm, NumericVector thetaFm, NumericVector f, NumericMatrix Rlam, NumericMatrix VZ, float surface);
+RcppExport SEXP _TCHazaRds_KepertWindFieldPi(SEXP rMaxSEXP, SEXP vMaxSEXP, SEXP vFmSEXP, SEXP thetaFmSEXP, SEXP fSEXP, SEXP RlamSEXP, SEXP VZSEXP, SEXP surfaceSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
@@ -180,7 +182,8 @@ BEGIN_RCPP
     Rcpp::traits::input_parameter< NumericVector >::type f(fSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type Rlam(RlamSEXP);
     Rcpp::traits::input_parameter< NumericMatrix >::type VZ(VZSEXP);
-    rcpp_result_gen = Rcpp::wrap(KepertWindFieldPi(rMax, vMax, vFm, thetaFm, f, Rlam, VZ));
+    Rcpp::traits::input_parameter< float >::type surface(surfaceSEXP);
+    rcpp_result_gen = Rcpp::wrap(KepertWindFieldPi(rMax, vMax, vFm, thetaFm, f, Rlam, VZ, surface));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -357,9 +360,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_TCHazaRds_NewHollandWindProfilePi", (DL_FUNC) &_TCHazaRds_NewHollandWindProfilePi, 7},
     {"_TCHazaRds_DoubleHollandWindProfilePi", (DL_FUNC) &_TCHazaRds_DoubleHollandWindProfilePi, 8},
     {"_TCHazaRds_DoubleHollandPressureProfilePi", (DL_FUNC) &_TCHazaRds_DoubleHollandPressureProfilePi, 5},
-    {"_TCHazaRds_HubbertWindFieldPi", (DL_FUNC) &_TCHazaRds_HubbertWindFieldPi, 6},
-    {"_TCHazaRds_McConochieWindFieldPi", (DL_FUNC) &_TCHazaRds_McConochieWindFieldPi, 7},
-    {"_TCHazaRds_KepertWindFieldPi", (DL_FUNC) &_TCHazaRds_KepertWindFieldPi, 7},
+    {"_TCHazaRds_HubbertWindFieldPi", (DL_FUNC) &_TCHazaRds_HubbertWindFieldPi, 7},
+    {"_TCHazaRds_McConochieWindFieldPi", (DL_FUNC) &_TCHazaRds_McConochieWindFieldPi, 8},
+    {"_TCHazaRds_KepertWindFieldPi", (DL_FUNC) &_TCHazaRds_KepertWindFieldPi, 8},
     {"_TCHazaRds_Rdist", (DL_FUNC) &_TCHazaRds_Rdist, 4},
     {"_TCHazaRds_JelesnianskiWindProfile", (DL_FUNC) &_TCHazaRds_JelesnianskiWindProfile, 4},
     {"_TCHazaRds_HollandWindProfile", (DL_FUNC) &_TCHazaRds_HollandWindProfile, 7},

@@ -24,4 +24,3 @@ vector of pressures.
 \description{
 Pressure profile time series at a grid point
 }
-\keyword{internal}

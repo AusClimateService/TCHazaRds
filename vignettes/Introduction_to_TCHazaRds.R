@@ -42,13 +42,13 @@ values(r) = 0
 GEO_land = land_geometry(r,r)
 
 #
-#land_v <- vect(system.file("extdata/OSM_500m_QLD/OSM_500m_QLD.shp", package="TCHazaRds"))
-#land_r = rasterize(land_v,r,touches=TRUE,background=0)
-#inland_proximity = costDistance(land_r,target = 0,scale=1)
-#GEO_land = land_geometry(land_r,inland_proximity)
+land_v <- vect(system.file("extdata/OSM_500m_QLD/OSM_500m_QLD.shp", package="TCHazaRds"))
+land_r = rasterize(land_v,r,touches=TRUE,background=0)
+inland_proximity = terra::costDist(land_r,target = 0,scale=1)
+GEO_land = land_geometry(land_r,inland_proximity)
 
-#plot(inland_proximity,main = "Inland Distance (m)")
-#plot(TC,add=TRUE)
+plot(inland_proximity,main = "Inland Distance (m)")
+plot(TC,add=TRUE)
 
 
 ## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------

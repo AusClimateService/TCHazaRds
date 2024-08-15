@@ -4,7 +4,7 @@
 \alias{McConochieWindFieldPi}
 \title{McConochie Wind Field Time Series}
 \usage{
-McConochieWindFieldPi(rMax, vMax, vFm, thetaFm, Rlam, V, f)
+McConochieWindFieldPi(rMax, vMax, vFm, thetaFm, Rlam, V, f, surface)
 }
 \arguments{
 \item{rMax}{radius of maximum winds in km}
@@ -20,6 +20,8 @@ McConochieWindFieldPi(rMax, vMax, vFm, thetaFm, Rlam, V, f)
 \item{V}{velocity profile}
 
 \item{f}{coriolis parameter at the centre of TC in hz}
+
+\item{surface}{equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.}
 }
 \value{
 array with two columns for zonal and meridional wind speed vector-components.
@@ -28,4 +30,3 @@ array with two columns for zonal and meridional wind speed vector-components.
 \description{
 Time series vortex Wind, wind vectors. McConochie, J.D., T.A.Hardy and L.B.Mason, 2004: Modelling tropical cyclone over - water wind and pressure fields. Ocean Engineering, 31, 1757 - 1782.
 }
-\keyword{internal}

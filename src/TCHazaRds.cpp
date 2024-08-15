@@ -7,8 +7,6 @@ using namespace Rcpp;
 //' @param Gridlat single Grid point latitude
 //' @param TClon vector of TC longitudes
 //' @param TClat vector of TC latitudes
-//' @keywords internal
-//' @NoRd 
 //' @return two columns for distance in km and cartesian direction in degrees, counterclockwise from the x axis.
 //' //@example RdistPi(142,-14,c(144,145),c(-11,-12))
 // [[Rcpp::export]]
@@ -62,8 +60,6 @@ NumericMatrix RdistPi(float Gridlon, float Gridlat, NumericVector TClon, Numeric
 //' @param vMax maximum wind velocity calculation in m/s
 //' @param rMax radius of maximum winds in km
 //' @param R vector of distances from grid points to TC centre in km
-//' @keywords internal
-//' @NoRd 
 //' @return array with two columns for velocity and then vorticity.
 //' //@example JelesnianskiWindProfilePi(-1e-4,20,20,50)
 // [[Rcpp::export]]
@@ -97,8 +93,6 @@ NumericMatrix JelesnianskiWindProfilePi(NumericVector f, NumericVector vMax, Num
 //' @param vMax maximum wind velocity calculation in m/s
 //' @param rMax radius of maximum winds in km
 //' @param R vector of distances from grid points to TC centre in km
-//' @keywords internal
-//' @NoRd 
 //' @return array with two columns for velocity and then vorticity.
 //' //@example RankineWindProfilePi(-1e-4,20,20,50)
 // [[Rcpp::export]]
@@ -142,8 +136,6 @@ NumericMatrix RankineWindProfilePi(NumericVector f, NumericVector vMax, NumericV
 //' @param rho density of air in Kg/m3
 //' @param beta exponential term for Holland vortex
 //' @param R vector of distances from grid points to TC centre in km
-//' @keywords internal
-//' @NoRd 
 //' @return array with two columns for velocity and then vorticity.
 //' //@example HollandWindProfilePi(-1e-4,20,20,10,1.15,1.2,50)
 // [[Rcpp::export]]
@@ -207,8 +199,6 @@ NumericMatrix HollandWindProfilePi(NumericVector f, NumericVector vMax, NumericV
 //' @param cP TC central pressure in hPa
 //' @param beta exponential term for Holland vortex
 //' @param R vector of distances from grid points to TC centre in km
-//' @keywords internal
-//' @NoRd 
 //' @return vector of pressures.
 //' //@example HollandPressureProfilePi(20,20,980,1.2,50)
 // [[Rcpp::export]]
@@ -244,8 +234,6 @@ NumericVector HollandPressureProfilePi(NumericVector rMax, NumericVector dP, Num
 //' @param R vector of distances from grid points to TC centre in km
 //' @param vMax maximum wind velocity calculation in m/s
 //' @param beta exponential term for Holland vortex
-//' @keywords internal
-//' @NoRd 
 //' @return array with two columns for velocity and then vorticity.
 //' //@example NewHollandWindProfilePi(-1e-4,20,20,1.15,-14,50,1.3)
 // [[Rcpp::export]]
@@ -307,8 +295,6 @@ NumericMatrix NewHollandWindProfilePi(NumericVector f, NumericVector rMax, Numer
 //' @param rho density of air in Kg/m3
 //' @param beta exponential term for Holland vortex
 //' @param R vector of distances from grid points to TC centre in km
-//' @keywords internal
-//' @NoRd 
 //' @return array with two columns for velocity and then vorticity.
 //' //@example DoubleHollandWindProfilePi(-1e-4,20,20,10,980,1.15,1.2,50)
 // [[Rcpp::export]]
@@ -440,8 +426,6 @@ NumericMatrix DoubleHollandWindProfilePi(NumericVector f, NumericVector vMax, Nu
 //' @param cP TC central pressure in hPa
 //' @param beta exponential term for Holland vortex
 //' @param R vector of distances from grid points to TC centre in km
-//' @keywords internal
-//' @NoRd 
 //' @return vector of pressures.
 //' //@example DoubleHollandPressureProfilePi(20,20,980,1.2,50)
 // [[Rcpp::export]]
@@ -500,12 +484,11 @@ NumericVector DoubleHollandPressureProfilePi(NumericVector rMax, NumericVector d
 //' @param thetaFm input forward direction of TC
 //' @param Rlam two columns for distances and direction from grid points to TC centre in km
 //' @param V velocity profile
-//' @keywords internal
-//' @NoRd 
+//' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
 //' @return array with two columns for zonal and meridional wind speed vector-components.
 //' //@example HubbertWindFieldPi(-1e-4,20,2,10,rbind(c(50,35),c(45,40)),c(20,20))
 // [[Rcpp::export]]
-NumericMatrix HubbertWindFieldPi(NumericVector f, NumericVector rMax, NumericVector vFm, NumericVector thetaFm, NumericMatrix Rlam, NumericVector V)
+NumericMatrix HubbertWindFieldPi(NumericVector f, NumericVector rMax, NumericVector vFm, NumericVector thetaFm, NumericMatrix Rlam, NumericVector V,float surface)
 {
 	//
 	//Hubbert, G.D., G.J.Holland, L.M.Leslie and M.J.Manton, 1991:
@@ -516,7 +499,7 @@ NumericMatrix HubbertWindFieldPi(NumericVector f, NumericVector rMax, NumericVec
   NumericMatrix UwVw(n,2);
 
 	float Km = 0.70f; //reduction factor from boundary layer to water surface
-
+  if(surface < 1.0f) Km = 1;
 	float inflow;
 	float Ri,fi,vFmi,Vi,rMaxi;
 	float lami;
@@ -525,7 +508,7 @@ NumericMatrix HubbertWindFieldPi(NumericVector f, NumericVector rMax, NumericVec
 	float piOn180 = pi / 180.0f;
 	float thetaFmRAD;
   float sf;
-	float thetaMaxfabsolute, asym, Vsf, phi;
+	float thetaMaxAbsolute, asym, Vsf, phi;
 
 	for(int i = 0;i < n; i++){
 	  fi = f[i];
@@ -546,9 +529,9 @@ NumericMatrix HubbertWindFieldPi(NumericVector f, NumericVector rMax, NumericVec
 
 		inflow *= piOn180;
     //CB didn't have * pi / 180.0f
-		thetaMaxfabsolute = thetaFmRAD + thetaMax*-sf* piOn180;
-		asym = vFmi * cosf(thetaMaxfabsolute - lami + pi);
-		Vsf =  Km* Vi +asym;
+		thetaMaxAbsolute = thetaFmRAD + thetaMax*-sf* piOn180;
+		asym = vFmi * cosf(thetaMaxAbsolute - lami + pi);
+		Vsf =  Km * (Vi + asym);
 		phi = inflow - lami;
     //TCRM has an additional factor 1.069 to convert to 1-munite sustained wind speed
 		UwVw(i,0) = Vsf *sinf(phi);
@@ -567,12 +550,11 @@ NumericMatrix HubbertWindFieldPi(NumericVector f, NumericVector rMax, NumericVec
 //' @param Rlam two columns for distances and direction from grid points to TC centre in km
 //' @param V velocity profile
 //' @param f coriolis parameter at the centre of TC in hz
-//' @keywords internal
-//' @NoRd 
+//' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
 //' @return array with two columns for zonal and meridional wind speed vector-components.
 //' //@example McConochieWindFieldPi(-1e-4,20,2,10,rbind(c(50,35),c(45,40)),c(20,20))
 // [[Rcpp::export]]
-NumericMatrix McConochieWindFieldPi(NumericVector rMax, NumericVector vMax, NumericVector vFm, NumericVector thetaFm, NumericMatrix Rlam, NumericVector V,float f)
+NumericMatrix McConochieWindFieldPi(NumericVector rMax, NumericVector vMax, NumericVector vFm, NumericVector thetaFm, NumericMatrix Rlam, NumericVector V,float f,float surface)
 {
 	//
 	//McConochie, J.D., T.A.Hardy and L.B.Mason, 2004:
@@ -587,7 +569,7 @@ NumericMatrix McConochieWindFieldPi(NumericVector rMax, NumericVector vMax, Nume
 	float lami;
 	float thetaMax = 70.0f;
   float pi = 3.141592f;
-	float thetaMaxfabsolute, asym, Vsf, phi,swrf;
+	float thetaMaxAbsolute, asym, Vsf, phi,swrf;
 	float thetaFmRAD;
   float sf;
   sf = f/fabs(f);
@@ -617,26 +599,27 @@ NumericMatrix McConochieWindFieldPi(NumericVector rMax, NumericVector vMax, Nume
 		}
 		inflow = inflow*piOn180;  //missing -sign(f) i.e. f/fabs(f)
 
-		thetaMaxfabsolute = thetaFmRAD + thetaMax*-1.0f*sf*pi/180;
+		thetaMaxAbsolute = thetaFmRAD + thetaMax*-1.0f*sf*pi/180;
 		phi = inflow - lami;
 
-		asym = (0.5f * (1.0f + cosf(thetaMaxfabsolute - lami)) * vFmi * (Vi / vMaxi));
+		asym = (0.5f * (1.0f + cosf(thetaMaxAbsolute - lami)) * vFmi * (Vi / vMaxi));
 		Vsf = Vi + asym;
 
 		swrf = 0.81f;
 		// had an extra ;
-		if (Vsf >= 6.0f)
+		if (abs(Vsf) >= 6.0f)
 		{
-			swrf = 0.81f - (2.93f * fabs(Vsf - 6.0f) / 1000.0f);
+			swrf = 0.81f - (2.93f * (fabs(Vsf) - 6.0f) / 1000.0f);
 		}
-		if (Vsf >= 19.5f)
+		if (abs(Vsf) >= 19.5f)
 		{
-			swrf = 0.77f - (4.31f * fabs(Vsf - 19.5f) / 1000.0f);
+			swrf = 0.77f - (4.31f * (fabs(Vsf) - 19.5f) / 1000.0f);
 		}
-		if (Vsf >= 45.0f)
+		if (abs(Vsf) >= 45.0f)
 		{
 			swrf = 0.66f;
 		}
+		if(surface < 1.0f) swrf = 1.0f;
     // TCRM has an additional factor to convert to 1-munite sustained wind speed:
 		UwVw(i,0) = swrf * Vsf * sinf(phi);
 		UwVw(i,1) = swrf * Vsf * cosf(phi);
@@ -654,37 +637,35 @@ NumericMatrix McConochieWindFieldPi(NumericVector rMax, NumericVector vMax, Nume
 //' @param f single coriolis parameter at the centre of TC in hz
 //' @param Rlam two columns for distances and direction from grid points to TC centre in km
 //' @param VZ array two columns velocity then vorticity
-//' @keywords internal
-//' @NoRd 
+//' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
 //' @return array with two columns for zonal and meridional wind speed vector-components.
 //' //@example KepertWindField(20,20,2,10,-1e-4,rbind(c(50,35),c(45,40)),rbind(c(20,2),c(22,3)))
 // [[Rcpp::export]]
-NumericMatrix KepertWindFieldPi(NumericVector rMax, NumericVector vMax, NumericVector vFm, NumericVector thetaFm, NumericVector f, NumericMatrix Rlam, NumericMatrix VZ)
+NumericMatrix KepertWindFieldPi(NumericVector rMax, NumericVector vMax, NumericVector vFm, NumericVector thetaFm, NumericVector f, NumericMatrix Rlam, NumericMatrix VZ,float surface)
 {
 	// Kepert, J., 2001: The Dynamics of Boundary Layer Jets within the
 	//Tropical Cyclone Core.Part I : Linear Theory.J.Atmos.Sci., 58,
 	//	2469 - 2484
-	
 	//Orginal code { Written Jeff Kepert, Bureau of Meteorology, 1998-2000.
-        //Copyright the Bureau of Meteorology.
-        //Please do not distribute orignal work without my knowledge.
-
-        //The model is, so far as I know, robust, except if the storm is
-        //close to inertially neutral (e.g. b too big). Note that it was written
-        //to understand the dynamics, not to make accurate predictions -  
-        //the constants (C, K, etc) have not been tuned to observations.
-        //Note also that because of a linearisation in the derivation, the
-        //model does not produce the correct limit in the limit r -> infinity.
-        //This code uses a Holland (1980) parametric profile, but should also
-        //work with other reasonable parametric profiles.
-        //Created on Fri Oct  2 09:53:29 2015. Port from matlab code.
-        //@author: Jeff }
-
+	//Copyright the Bureau of Meteorology.
+	//Please do not distribute orignal work without my knowledge.
+	
+	//The model is, so far as I know, robust, except if the storm is
+	//close to inertially neutral (e.g. b too big). Note that it was written
+	//to understand the dynamics, not to make accurate predictions -  
+	//the constants (C, K, etc) have not been tuned to observations.
+	//Note also that because of a linearisation in the derivation, the
+	//model does not produce the correct limit in the limit r -> infinity.
+	//This code uses a Holland (1980) parametric profile, but should also
+	//work with other reasonable parametric profiles.
+	//Created on Fri Oct  2 09:53:29 2015. Port from matlab code.
+	//@author: Jeff }
+	
 	NumericVector V = VZ( _ , 0 );
 	int n = V.size();
   NumericMatrix UwVw(n,2);
 
-	float Ri,fi,rMaxi,vMaxi, Vi, Zi,fs;
+	float Ri,fi,rMaxi,vMaxi, Vi, Zi,fs,Ks;
 	float lami,lami2;
 	float K = 50.0f; //diffusivity
 	float Cd = 0.002f; // Constant drag coeff
@@ -737,6 +718,8 @@ NumericMatrix KepertWindFieldPi(NumericVector rMax, NumericVector vMax, NumericV
 		eta = fabs((Cd / K) * Vi / sqrtf(sqrt(al * be) + fabs(gam)));
 		psi = fabs((Cd / K) * Vi / sqrtf(fabs(sqrt(al * be) - fabs(gam))));
 
+		Ks = ((chi * chi) + 2.0f * chi + 2.0f)/(2.0f * chi * chi + 3.0f * chi + 2.0f); //gradient to surface wind reduction factor Eq 30 in Kepert 2001
+    if(surface < 1.0f) Ks = 1.0f;
 		// converted from complex number formula to this
 		A0r = -(chi  * (1.0f + 0.0f * (1.0f + chi)) * Vi) / (2.0f * chi * chi + 3.0f * chi + 2.0f);
 		A0i = -(chi  * (1.0f + 1.0f * (1.0f + chi)) * Vi) / (2.0f * chi * chi + 3.0f * chi + 2.0f);
@@ -797,8 +780,8 @@ NumericMatrix KepertWindFieldPi(NumericVector rMax, NumericVector vMax, NumericV
 	  //  phi = pi - phi;
 	  //}
 	  float square_term = sqrtf(usf * usf + vsf * vsf);
-		UwVw(i,0) = square_term * sinf(phi - lami);
-		UwVw(i,1) = square_term * cosf(phi - lami);
+		UwVw(i,0) = square_term * sinf(phi - lami) * Ks;
+		UwVw(i,1) = square_term * cosf(phi - lami) * Ks;
 
 	}
 	return UwVw;
@@ -811,8 +794,6 @@ NumericMatrix KepertWindFieldPi(NumericVector rMax, NumericVector vMax, NumericV
 //' @param Gridlat vector of Grid point latitudes
 //' @param TClon single TC longitude
 //' @param TClat single TC latitude
-//' @keywords internal
-//' @NoRd 
 //' @return two columns for distance in km and cartesian direction in degrees, counter clockwise from the x axis.
 //' //@example Rdist(c(144,145),c(-11,-12),142,-14)
 // [[Rcpp::export]]
@@ -863,8 +844,6 @@ NumericMatrix Rdist(NumericVector Gridlon, NumericVector Gridlat, float TClon, f
 //' @param vMax maximum wind velocity calculation in m/s
 //' @param rMax radius of maximum winds in km
 //' @param R vector of distances from grid points to TC centre in km
-//' @keywords internal
-//' @NoRd 
 //' @return array with two columns for velocity and then vorticity.
 //' //@example JelesnianskiWindProfile(-1e-4,20,20,50)
 // [[Rcpp::export]]// [[Rcpp::export]]
@@ -897,8 +876,6 @@ NumericMatrix JelesnianskiWindProfile(float f, float vMax, float rMax, NumericVe
 //' @param rho density of air in Kg/m3
 //' @param beta exponential term for Holland vortex
 //' @param R vector of distances from grid points to TC centre in km
-//' @keywords internal
-//' @NoRd 
 //' @return array with two columns for velocity and then vorticity.
 //' //@example HollandWindProfile(-1e-4,20,20,10,1.15,1.2,50)
 // [[Rcpp::export]]
@@ -910,13 +887,13 @@ NumericMatrix HollandWindProfile(float f, float vMax, float rMax, float dP, floa
 
   int n = R.size();
   NumericMatrix VZ(n,2);
-  float Vi, Ri, Zi;
+  float Vi, Ri, Zi,fs;
   float E, d2Vm,dVm,aa,bb,cc;
   float delta, edelta;
-
+  fs = f / fabs(f);
   dP *= 100.0f;
   E = expf(1.0f);
-  float fsign = f / fabs(f);
+
   for(int i = 0;i < n; i++){
     //
     Ri = R[i];
@@ -946,8 +923,8 @@ NumericMatrix HollandWindProfile(float f, float vMax, float rMax, float dP, floa
       //Zi = ((sqrtf((dP * beta / rho) * delta * edelta + (Ri * f / 2.0f)*(Ri * f / 2.0f))) / Ri - fabs(f) + edelta * (2.0f * (beta * beta) * dP * (delta - 1.0f) * delta + rho * edelta * (f * Ri) *(f * Ri)) / (2.0f * rho * Ri * sqrtf(4.0f * (beta * dP / rho) * delta * edelta + (f * Ri) *(f * Ri))));
       Zi = fabs(f) + (beta*beta * dP * (delta * delta) * edelta / (2.0f * rho * Ri) - beta*beta * dP * delta * edelta / (2.0f * rho * Ri) + Ri * f * f / 4.0f) / sqrtf(beta * dP * delta * edelta / rho + (Ri * f / 2)*(Ri * f / 2)) + (sqrtf(beta * dP * delta * edelta / rho + (Ri * f / 2)*(Ri * f / 2))) / Ri;
     }
-    VZ(i,0) = Vi* fsign;
-    VZ(i,1) = Zi* fsign;
+    VZ(i,0) = Vi * fs;
+    VZ(i,1) = Zi * fs;
   }
   return VZ;
 }
@@ -959,8 +936,6 @@ NumericMatrix HollandWindProfile(float f, float vMax, float rMax, float dP, floa
 //' @param cP TC central pressure in hPa
 //' @param beta exponential term for Holland vortex
 //' @param R vector of distances from grid points to TC centre in km
-//' @keywords internal
-//' @NoRd 
 //' @return vector of pressures.
 //' //@example HollandPressureProfile(20,20,980,1.2,50)
 // [[Rcpp::export]]
@@ -991,8 +966,6 @@ NumericVector HollandPressureProfile(float rMax, float dP, float cP, float beta,
 //' @param R vector of distances from grid points to TC centre in km
 //' @param vMax maximum wind velocity calculation in m/s
 //' @param beta exponential term for Holland vortex
-//' @keywords internal
-//' @NoRd 
 //' @return array with two columns for velocity and then vorticity.
 //' //@example NewHollandWindProfile(-1e-4,20,20,1.15,-14,50,1.3)
 // [[Rcpp::export]]
@@ -1049,8 +1022,6 @@ NumericMatrix NewHollandWindProfile(float f, float rMax, float dP, float rho, Nu
 //' @param rho density of air in Kg/m3
 //' @param beta exponential term for Holland vortex
 //' @param R vector of distances from grid points to TC centre in km
-//' @keywords internal
-//' @NoRd 
 //' @return array with two columns for velocity and then vorticity.
 //' //@example DoubleHollandWindProfile(-1e-4,20,20,10,980,1.15,1.2,50)
 // [[Rcpp::export]]
@@ -1179,8 +1150,6 @@ NumericMatrix DoubleHollandWindProfile(float f, float vMax, float rMax, float dP
 //' @param cP TC central pressure in hPa
 //' @param beta exponential term for Holland vortex
 //' @param R vector of distances from grid points to TC centre in km
-//' @keywords internal
-//' @NoRd 
 //' @return vector of pressures.
 //' //@example DoubleHollandPressureProfile(20,20,980,1.2,50)
 // [[Rcpp::export]]
@@ -1237,8 +1206,7 @@ NumericVector DoubleHollandPressureProfile(float rMax, float dP, float cP,  floa
 //' @param Rlam two columns for distances and direction from grid points to TC centre in km
 //' @param V velocity profile
 //' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
-//' @keywords internal
-//' @NoRd 
+//' 
 //' @return array with two columns for zonal and meridional wind speed vector-components.
 //' //@example HubbertWindField(-1e-4,20,2,10,rbind(c(50,35),c(45,40)),c(20,20))
 // [[Rcpp::export]]
@@ -1251,9 +1219,8 @@ NumericMatrix HubbertWindField(float f, float rMax, float vFm, float thetaFm, Nu
 
   int n = V.size();
   NumericMatrix UwVw(n,2);
-
-  float Km = 1.0f; //no reduction
-  if(surface == 1.0f) Km = 0.70f; // gradient to surface wind reduction factor
+  float Km = 0.70f; // gradient to surface wind reduction factor
+  if(surface < 1.0f) Km = 1.0f; //no reduction
 
   float inflow;
   float Ri,Vi;
@@ -1262,13 +1229,13 @@ NumericMatrix HubbertWindField(float f, float rMax, float vFm, float thetaFm, Nu
   float pi = 3.141592f;
   float thetaFmRAD;
   float sf;
-  float thetaMaxfabsolute, asym, Vsf, phi;
+  float thetaMaxAbsolute, asym, Vsf, phi;
   sf = f/fabs(f);
   if(sf > 0) thetaMax = thetaMax+180.0f; //correct for northern hemisphere
   float piOn180 = pi / 180.0f;
 
   thetaFmRAD = thetaFm * piOn180;
-  thetaMaxfabsolute = thetaFmRAD + thetaMax*-1.0 * sf * piOn180;
+  thetaMaxAbsolute = thetaFmRAD + thetaMax*-1.0 * sf * piOn180;
 
   for(int i = 0;i < n; i++){
 
@@ -1286,12 +1253,12 @@ NumericMatrix HubbertWindField(float f, float rMax, float vFm, float thetaFm, Nu
     inflow = inflow * piOn180;
     //CB didn't have * pi / 180.0f
 
-    asym = vFm * cosf(thetaMaxfabsolute - lami + pi);
-    Vsf =  Km* Vi +asym;
+    asym = vFm * cosf(thetaMaxAbsolute - lami + pi);
+    Vsf =  Km * (Vi + asym);
     phi = inflow - lami;
     //TCRM has an additional factor 1.069 to convert to 1-munite sustained wind speed
-    UwVw(i,0) = Vsf *sinf(phi);
-    UwVw(i,1) = Vsf *cosf(phi);
+    UwVw(i,0) = Vsf * sinf(phi);
+    UwVw(i,1) = Vsf * cosf(phi);
 
   }
   return UwVw;
@@ -1307,8 +1274,6 @@ NumericMatrix HubbertWindField(float f, float rMax, float vFm, float thetaFm, Nu
 //' @param V velocity profile
 //' @param f coriolis parameter at the centre of TC in hz
 //' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
-//' @keywords internal
-//' @NoRd 
 //' @return array with two columns for zonal and meridional wind speed vector-components.
 //' //@example McConochieWindField(-1e-4,20,2,10,rbind(c(50,35),c(45,40)),c(20,20))
 // [[Rcpp::export]]
@@ -1327,14 +1292,14 @@ NumericMatrix McConochieWindField(float rMax, float vMax, float vFm, float theta
   float lami;
   float thetaMax = 70.0f;
   float pi = 3.141592f;
-  float thetaMaxfabsolute, asym, Vsf, phi,swrf;
+  float thetaMaxAbsolute, asym, Vsf, phi,swrf;
   float thetaFmRAD;
   float piOn180 = pi / 180.0f;
   thetaFmRAD = thetaFm * piOn180;
-  //rMax = rMax;
+  rMax = rMax;
   float sf;
   sf = f/fabs(f);
-  thetaMaxfabsolute = thetaFmRAD + thetaMax*-1.0f*sf;
+  thetaMaxAbsolute = thetaFmRAD + thetaMax*-1.0f*sf;
   for(int i = 0;i < n; i++){
     //
     //V = self.velocity(R)
@@ -1358,26 +1323,16 @@ NumericMatrix McConochieWindField(float rMax, float vMax, float vFm, float theta
 
     phi = inflow - lami;
 
-    asym = (0.5f * (1.0f + cosf(thetaMaxfabsolute - lami)) * vFm * (Vi / vMax));
+    asym = (0.5f * (1.0f + cosf(thetaMaxAbsolute - lami)) * vFm * (Vi / vMax));
     Vsf = Vi + asym;
-    swrf = 1.0f;  //no reduction
-    if(surface == 1.0f) //gradient to surface wind reduction factor
-    {
-      swrf = 0.81f;
-      // had an extra ;
-      if (Vsf >= 6.0f)
-      {
-        swrf = 0.81f - (2.93f * fabs(Vsf - 6.0f) / 1000.0f);
-      }
-      if (Vsf >= 19.5f)
-      {
-        swrf = 0.77f - (4.31f * fabs(Vsf - 19.5f) / 1000.0f);
-      }
-      if (Vsf >= 45.0f)
-      {
-        swrf = 0.66f;
-      }
-    }
+
+    //gradient to surface wind reduction factor
+    swrf = 0.81f;
+    // had an extra ;
+    if (fabs(Vsf) >= 6.0f) swrf = 0.81f - (2.93f * (fabs(Vsf) - 6.0f) / 1000.0f);
+    if (fabs(Vsf) >= 19.5f) swrf = 0.77f - (4.31f * (fabs(Vsf) - 19.5f) / 1000.0f);
+    if (fabs(Vsf) >= 45.0f) swrf = 0.66f;
+    if(surface < 1.0f) swrf = 1.0f;  //no reduction
     // TCRM has an additional factor to convert to 1-munite sustained wind speed:
     UwVw(i,0) = swrf * Vsf * sinf(phi);
     UwVw(i,1) = swrf * Vsf * cosf(phi);
@@ -1396,8 +1351,6 @@ NumericMatrix McConochieWindField(float rMax, float vMax, float vFm, float theta
 //' @param Rlam two columns for distances and Cartesian direction clocwise from the x axis from grid points to TC centre in km
 //' @param VZ array two columns velocity then vorticity
 //' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
-//' @keywords internal
-//' @NoRd 
 //' @return array with two columns for zonal and meridional wind speed vector-components.
 //' //@example KepertWindField(20,20,2,10,-1e-4,rbind(c(50,35),c(45,40)),rbind(c(20,2),c(22,3)))
 // [[Rcpp::export]]
@@ -1406,11 +1359,10 @@ NumericMatrix KepertWindField(float rMax, float vMax, float vFm, float thetaFm, 
   // Kepert, J., 2001: The Dynamics of Boundary Layer Jets within the
   //Tropical Cyclone Core.Part I : Linear Theory.J.Atmos.Sci., 58,
   //	2469 - 2484
-	
   //Orginal code { Written Jeff Kepert, Bureau of Meteorology, 1998-2000.
   //Copyright the Bureau of Meteorology.
   //Please do not distribute orignal work without my knowledge.
-
+  
   //The model is, so far as I know, robust, except if the storm is
   //close to inertially neutral (e.g. b too big). Note that it was written
   //to understand the dynamics, not to make accurate predictions -  
@@ -1480,8 +1432,8 @@ NumericMatrix KepertWindField(float rMax, float vMax, float vFm, float thetaFm, 
     eta = fabs((Cd / K) * Vi / sqrtf(sqrt(al * be) + fabs(gam)));
     psi = fabs((Cd / K) * Vi / sqrtf(fabs(sqrt(al * be) - fabs(gam))));
 
-    Ks = ((chi * chi) + 2.0f * chi + 2.0f)/(2.0f * chi * chi + 3.0f * chi + 2.0f);//gradient to surface wind reduction factor Eq 30 in Kepert 2001
-    if(surface == 1.0f) Ks = 1;
+    Ks = ((chi * chi) + 2.0f * chi + 2.0f)/(2.0f * chi * chi + 3.0f * chi + 2.0f); //gradient to surface wind reduction factor Eq 30 in Kepert 2001
+    if(surface < 1.0f) Ks = 1.0f;
 
     // converted from complex number formula to this
     A0r = -(chi  * (1.0f + 0.0f * (1.0f + chi)) * Vi) / (2.0f * chi * chi + 3.0f * chi + 2.0f);
@@ -1544,8 +1496,8 @@ NumericMatrix KepertWindField(float rMax, float vMax, float vFm, float thetaFm, 
     //  phi = pi - phi;
     //}
     float square_term = sqrtf(usf*usf + vsf *vsf);
-    UwVw(i,0) = square_term * sinf(phi - lami)/Ks;
-    UwVw(i,1) = square_term * cosf(phi - lami)/Ks;
+    UwVw(i,0) = square_term * sinf(phi - lami)*Ks;
+    UwVw(i,1) = square_term * cosf(phi - lami)*Ks;
 
   }
   return UwVw;

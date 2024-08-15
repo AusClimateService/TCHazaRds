@@ -7,8 +7,6 @@
 #' @param Gridlat single Grid point latitude
 #' @param TClon vector of TC longitudes
 #' @param TClat vector of TC latitudes
-#' @keywords internal
-#' @NoRd 
 #' @return two columns for distance in km and cartesian direction in degrees, counterclockwise from the x axis.
 #' //@example RdistPi(142,-14,c(144,145),c(-11,-12))
 RdistPi <- function(Gridlon, Gridlat, TClon, TClat) {
@@ -21,8 +19,6 @@ RdistPi <- function(Gridlon, Gridlat, TClon, TClat) {
 #' @param vMax maximum wind velocity calculation in m/s
 #' @param rMax radius of maximum winds in km
 #' @param R vector of distances from grid points to TC centre in km
-#' @keywords internal
-#' @NoRd 
 #' @return array with two columns for velocity and then vorticity.
 #' //@example JelesnianskiWindProfilePi(-1e-4,20,20,50)
 JelesnianskiWindProfilePi <- function(f, vMax, rMax, R) {
@@ -35,8 +31,6 @@ JelesnianskiWindProfilePi <- function(f, vMax, rMax, R) {
 #' @param vMax maximum wind velocity calculation in m/s
 #' @param rMax radius of maximum winds in km
 #' @param R vector of distances from grid points to TC centre in km
-#' @keywords internal
-#' @NoRd 
 #' @return array with two columns for velocity and then vorticity.
 #' //@example RankineWindProfilePi(-1e-4,20,20,50)
 RankineWindProfilePi <- function(f, vMax, rMax, R) {
@@ -52,8 +46,6 @@ RankineWindProfilePi <- function(f, vMax, rMax, R) {
 #' @param rho density of air in Kg/m3
 #' @param beta exponential term for Holland vortex
 #' @param R vector of distances from grid points to TC centre in km
-#' @keywords internal
-#' @NoRd 
 #' @return array with two columns for velocity and then vorticity.
 #' //@example HollandWindProfilePi(-1e-4,20,20,10,1.15,1.2,50)
 HollandWindProfilePi <- function(f, vMax, rMax, dP, rho, beta, R) {
@@ -67,8 +59,6 @@ HollandWindProfilePi <- function(f, vMax, rMax, dP, rho, beta, R) {
 #' @param cP TC central pressure in hPa
 #' @param beta exponential term for Holland vortex
 #' @param R vector of distances from grid points to TC centre in km
-#' @keywords internal
-#' @NoRd 
 #' @return vector of pressures.
 #' //@example HollandPressureProfilePi(20,20,980,1.2,50)
 HollandPressureProfilePi <- function(rMax, dP, cP, beta, R) {
@@ -84,8 +74,6 @@ HollandPressureProfilePi <- function(rMax, dP, cP, beta, R) {
 #' @param R vector of distances from grid points to TC centre in km
 #' @param vMax maximum wind velocity calculation in m/s
 #' @param beta exponential term for Holland vortex
-#' @keywords internal
-#' @NoRd 
 #' @return array with two columns for velocity and then vorticity.
 #' //@example NewHollandWindProfilePi(-1e-4,20,20,1.15,-14,50,1.3)
 NewHollandWindProfilePi <- function(f, rMax, dP, rho, R, vMax, beta) {
@@ -102,8 +90,6 @@ NewHollandWindProfilePi <- function(f, rMax, dP, rho, R, vMax, beta) {
 #' @param rho density of air in Kg/m3
 #' @param beta exponential term for Holland vortex
 #' @param R vector of distances from grid points to TC centre in km
-#' @keywords internal
-#' @NoRd 
 #' @return array with two columns for velocity and then vorticity.
 #' //@example DoubleHollandWindProfilePi(-1e-4,20,20,10,980,1.15,1.2,50)
 DoubleHollandWindProfilePi <- function(f, vMax, rMax, dP, cP, rho, beta, R) {
@@ -117,8 +103,6 @@ DoubleHollandWindProfilePi <- function(f, vMax, rMax, dP, cP, rho, beta, R) {
 #' @param cP TC central pressure in hPa
 #' @param beta exponential term for Holland vortex
 #' @param R vector of distances from grid points to TC centre in km
-#' @keywords internal
-#' @NoRd 
 #' @return vector of pressures.
 #' //@example DoubleHollandPressureProfilePi(20,20,980,1.2,50)
 DoubleHollandPressureProfilePi <- function(rMax, dP, cP, beta, R) {
@@ -133,12 +117,11 @@ DoubleHollandPressureProfilePi <- function(rMax, dP, cP, beta, R) {
 #' @param thetaFm input forward direction of TC
 #' @param Rlam two columns for distances and direction from grid points to TC centre in km
 #' @param V velocity profile
-#' @keywords internal
-#' @NoRd 
+#' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
 #' @return array with two columns for zonal and meridional wind speed vector-components.
 #' //@example HubbertWindFieldPi(-1e-4,20,2,10,rbind(c(50,35),c(45,40)),c(20,20))
-HubbertWindFieldPi <- function(f, rMax, vFm, thetaFm, Rlam, V) {
-    .Call(`_TCHazaRds_HubbertWindFieldPi`, f, rMax, vFm, thetaFm, Rlam, V)
+HubbertWindFieldPi <- function(f, rMax, vFm, thetaFm, Rlam, V, surface) {
+    .Call(`_TCHazaRds_HubbertWindFieldPi`, f, rMax, vFm, thetaFm, Rlam, V, surface)
 }
 
 #' @title McConochie Wind Field Time Series
@@ -150,12 +133,11 @@ HubbertWindFieldPi <- function(f, rMax, vFm, thetaFm, Rlam, V) {
 #' @param Rlam two columns for distances and direction from grid points to TC centre in km
 #' @param V velocity profile
 #' @param f coriolis parameter at the centre of TC in hz
-#' @keywords internal
-#' @NoRd 
+#' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
 #' @return array with two columns for zonal and meridional wind speed vector-components.
 #' //@example McConochieWindFieldPi(-1e-4,20,2,10,rbind(c(50,35),c(45,40)),c(20,20))
-McConochieWindFieldPi <- function(rMax, vMax, vFm, thetaFm, Rlam, V, f) {
-    .Call(`_TCHazaRds_McConochieWindFieldPi`, rMax, vMax, vFm, thetaFm, Rlam, V, f)
+McConochieWindFieldPi <- function(rMax, vMax, vFm, thetaFm, Rlam, V, f, surface) {
+    .Call(`_TCHazaRds_McConochieWindFieldPi`, rMax, vMax, vFm, thetaFm, Rlam, V, f, surface)
 }
 
 #' @title Kepert Wind Field
@@ -167,12 +149,11 @@ McConochieWindFieldPi <- function(rMax, vMax, vFm, thetaFm, Rlam, V, f) {
 #' @param f single coriolis parameter at the centre of TC in hz
 #' @param Rlam two columns for distances and direction from grid points to TC centre in km
 #' @param VZ array two columns velocity then vorticity
-#' @keywords internal
-#' @NoRd 
+#' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
 #' @return array with two columns for zonal and meridional wind speed vector-components.
 #' //@example KepertWindField(20,20,2,10,-1e-4,rbind(c(50,35),c(45,40)),rbind(c(20,2),c(22,3)))
-KepertWindFieldPi <- function(rMax, vMax, vFm, thetaFm, f, Rlam, VZ) {
-    .Call(`_TCHazaRds_KepertWindFieldPi`, rMax, vMax, vFm, thetaFm, f, Rlam, VZ)
+KepertWindFieldPi <- function(rMax, vMax, vFm, thetaFm, f, Rlam, VZ, surface) {
+    .Call(`_TCHazaRds_KepertWindFieldPi`, rMax, vMax, vFm, thetaFm, f, Rlam, VZ, surface)
 }
 
 #' @title TC Distance and Direction From Output Grid Points
@@ -181,8 +162,6 @@ KepertWindFieldPi <- function(rMax, vMax, vFm, thetaFm, f, Rlam, VZ) {
 #' @param Gridlat vector of Grid point latitudes
 #' @param TClon single TC longitude
 #' @param TClat single TC latitude
-#' @keywords internal
-#' @NoRd 
 #' @return two columns for distance in km and cartesian direction in degrees, counter clockwise from the x axis.
 #' //@example Rdist(c(144,145),c(-11,-12),142,-14)
 Rdist <- function(Gridlon, Gridlat, TClon, TClat) {
@@ -195,8 +174,6 @@ Rdist <- function(Gridlon, Gridlat, TClon, TClat) {
 #' @param vMax maximum wind velocity calculation in m/s
 #' @param rMax radius of maximum winds in km
 #' @param R vector of distances from grid points to TC centre in km
-#' @keywords internal
-#' @NoRd 
 #' @return array with two columns for velocity and then vorticity.
 #' //@example JelesnianskiWindProfile(-1e-4,20,20,50)
 JelesnianskiWindProfile <- function(f, vMax, rMax, R) {
@@ -212,8 +189,6 @@ JelesnianskiWindProfile <- function(f, vMax, rMax, R) {
 #' @param rho density of air in Kg/m3
 #' @param beta exponential term for Holland vortex
 #' @param R vector of distances from grid points to TC centre in km
-#' @keywords internal
-#' @NoRd 
 #' @return array with two columns for velocity and then vorticity.
 #' //@example HollandWindProfile(-1e-4,20,20,10,1.15,1.2,50)
 HollandWindProfile <- function(f, vMax, rMax, dP, rho, beta, R) {
@@ -227,8 +202,6 @@ HollandWindProfile <- function(f, vMax, rMax, dP, rho, beta, R) {
 #' @param cP TC central pressure in hPa
 #' @param beta exponential term for Holland vortex
 #' @param R vector of distances from grid points to TC centre in km
-#' @keywords internal
-#' @NoRd 
 #' @return vector of pressures.
 #' //@example HollandPressureProfile(20,20,980,1.2,50)
 HollandPressureProfile <- function(rMax, dP, cP, beta, R) {
@@ -244,8 +217,6 @@ HollandPressureProfile <- function(rMax, dP, cP, beta, R) {
 #' @param R vector of distances from grid points to TC centre in km
 #' @param vMax maximum wind velocity calculation in m/s
 #' @param beta exponential term for Holland vortex
-#' @keywords internal
-#' @NoRd 
 #' @return array with two columns for velocity and then vorticity.
 #' //@example NewHollandWindProfile(-1e-4,20,20,1.15,-14,50,1.3)
 NewHollandWindProfile <- function(f, rMax, dP, rho, R, vMax, beta) {
@@ -262,8 +233,6 @@ NewHollandWindProfile <- function(f, rMax, dP, rho, R, vMax, beta) {
 #' @param rho density of air in Kg/m3
 #' @param beta exponential term for Holland vortex
 #' @param R vector of distances from grid points to TC centre in km
-#' @keywords internal
-#' @NoRd 
 #' @return array with two columns for velocity and then vorticity.
 #' //@example DoubleHollandWindProfile(-1e-4,20,20,10,980,1.15,1.2,50)
 DoubleHollandWindProfile <- function(f, vMax, rMax, dP, cP, rho, beta, R) {
@@ -277,8 +246,6 @@ DoubleHollandWindProfile <- function(f, vMax, rMax, dP, cP, rho, beta, R) {
 #' @param cP TC central pressure in hPa
 #' @param beta exponential term for Holland vortex
 #' @param R vector of distances from grid points to TC centre in km
-#' @keywords internal
-#' @NoRd 
 #' @return vector of pressures.
 #' //@example DoubleHollandPressureProfile(20,20,980,1.2,50)
 DoubleHollandPressureProfile <- function(rMax, dP, cP, beta, R) {
@@ -294,8 +261,7 @@ DoubleHollandPressureProfile <- function(rMax, dP, cP, beta, R) {
 #' @param Rlam two columns for distances and direction from grid points to TC centre in km
 #' @param V velocity profile
 #' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
-#' @keywords internal
-#' @NoRd 
+#' 
 #' @return array with two columns for zonal and meridional wind speed vector-components.
 #' //@example HubbertWindField(-1e-4,20,2,10,rbind(c(50,35),c(45,40)),c(20,20))
 HubbertWindField <- function(f, rMax, vFm, thetaFm, Rlam, V, surface) {
@@ -312,8 +278,6 @@ HubbertWindField <- function(f, rMax, vFm, thetaFm, Rlam, V, surface) {
 #' @param V velocity profile
 #' @param f coriolis parameter at the centre of TC in hz
 #' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
-#' @keywords internal
-#' @NoRd 
 #' @return array with two columns for zonal and meridional wind speed vector-components.
 #' //@example McConochieWindField(-1e-4,20,2,10,rbind(c(50,35),c(45,40)),c(20,20))
 McConochieWindField <- function(rMax, vMax, vFm, thetaFm, Rlam, V, f, surface) {
@@ -330,8 +294,6 @@ McConochieWindField <- function(rMax, vMax, vFm, thetaFm, Rlam, V, f, surface) {
 #' @param Rlam two columns for distances and Cartesian direction clocwise from the x axis from grid points to TC centre in km
 #' @param VZ array two columns velocity then vorticity
 #' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
-#' @keywords internal
-#' @NoRd 
 #' @return array with two columns for zonal and meridional wind speed vector-components.
 #' //@example KepertWindField(20,20,2,10,-1e-4,rbind(c(50,35),c(45,40)),rbind(c(20,2),c(22,3)))
 KepertWindField <- function(rMax, vMax, vFm, thetaFm, f, Rlam, VZ, surface) {

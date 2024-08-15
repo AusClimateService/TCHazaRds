@@ -30,4 +30,3 @@ array with two columns for velocity and then vorticity.
 \description{
 McConochie *et al*'s double Holland vortex model based on Cardone *et al*, 1994.This application is the Coral Sea adaptation of the double vortex model and it can also be used for concentric eye - wall configurations.
 }
-\keyword{internal}

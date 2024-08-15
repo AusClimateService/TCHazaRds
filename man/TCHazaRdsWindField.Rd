@@ -4,7 +4,7 @@
 \alias{TCHazaRdsWindField}
 \title{Compute the Wind and Pressure Spatial Hazards Field Associated with TCs Single Time Step.}
 \usage{
-TCHazaRdsWindField(GEO_land, TC, paramsTable)
+TCHazaRdsWindField(GEO_land, TC, paramsTable, returnWaves = FALSE)
 }
 \arguments{
 \item{GEO_land}{SpatVector or dataframe hazard geometry generated with land_geometry}
@@ -12,6 +12,8 @@ TCHazaRdsWindField(GEO_land, TC, paramsTable)
 \item{TC}{SpatVector or data.frame of Tropical cyclone track parameters for a single time step.}
 
 \item{paramsTable}{Global parameters to compute TC Hazards.}
+
+\item{returnWaves}{Return ocean wave parameters (default = FALSE)}
 }
 \value{
 SpatRaster with the following attributes\tabular{lll}{
@@ -21,6 +23,9 @@ SpatRaster with the following attributes\tabular{lll}{
    Vw \tab Zonal wind speed \tab m/s \cr
    Sw \tab Wind speed \tab m/s \cr
    Dw \tab The direction from which wind originates \tab deg clockwise from true north. \cr
+   Hs0 \tab Deep water significant wave height \tab m \cr
+   Tp0 \tab Deep water Peak wave period \tab s \cr
+   Dp0 \tab The peak direction in which wave are heading \tab deg clockwise from true north. \cr
 }
 }
 \description{
