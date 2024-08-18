@@ -16,7 +16,10 @@ update_Track(
   vMaxModel,
   betaModel,
   eP,
-  rho = NULL
+  rho = NULL,
+  RMAX,
+  VMAX,
+  B
 )
 }
 \arguments{
@@ -43,6 +46,12 @@ update_Track(
 \item{eP}{background environmental pressure (hPa)}
 
 \item{rho}{air density}
+
+\item{RMAX}{If params rMaxModel value is NA, use input TC$RMAX}
+
+\item{VMAX}{If params rMaxModel value is NA, use input TC$VMAX}
+
+\item{B}{If params rMaxModel value is NA, use input TC$B}
 }
 \value{
 list of track data inclining the rMax vMax and Beta.
@@ -58,9 +67,13 @@ params <- data.frame(params)
 require(terra)
 TCi <- vect(system.file("extdata/YASI/YASI.shp", package="TCHazaRds"))
 TCi$PRES <- TCi$BOM_PRES
+TCi$RMAX <- TCi$BOM_RMW/1.852 #convert from nautical miles to km
+TCi$VMAX <- TCi$BOM_WIND*1.94 #convert from knots to m/s
+TCi$B <- 1.4
 t1 <- strptime("2011-02-01 09:00:00","\%Y-\%m-\%d \%H:\%M:\%S", tz = "UTC") #first date in POSIX format
 t2 <- strptime(rev(TCi$ISO_TIME)[1],"\%Y-\%m-\%d \%H:\%M:\%S", tz = "UTC") #last date in POSIX format
 outdate <- seq(t1,t2,"hour") #array sequence from t1 to t2 stepping by “hour”
+# defult along track parameters are calculated
 TCil = update_Track(outdate = outdate,
                    indate = strptime(TCi$ISO_TIME,"\%Y-\%m-\%d \%H:\%M:\%S", tz = "UTC"),
                    TClons = TCi$LON,
@@ -72,6 +85,26 @@ TCil = update_Track(outdate = outdate,
                    vMaxModel=params$vMaxModel,
                    betaModel=params$betaModel,
                    eP = params$eP,
-                   rho = params$rhoa)
-
+                   rho = params$rhoa,
+                   RMAX = TCi$RMAX,
+                   VMAX = TCi$VMAX,
+                   B = TCi$B
+                   )
+# 'observed' along tack parameters are calculated (#Model = NA)                   
+TCil = update_Track(outdate = outdate,
+                   indate = strptime(TCi$ISO_TIME,"\%Y-\%m-\%d \%H:\%M:\%S", tz = "UTC"),
+                   TClons = TCi$LON,
+                   TClats = TCi$LAT,
+                   vFms=TCi$STORM_SPD,
+                  thetaFms=TCi$thetaFm,
+                   cPs=TCi$PRES,
+                  rMaxModel=NA,
+                   vMaxModel=NA,
+                   betaModel=NA,
+                   eP = params$eP,
+                   rho = params$rhoa,
+                   RMAX = TCi$RMAX,
+                   VMAX = TCi$VMAX,
+                   B = TCi$B
+                   )
 }

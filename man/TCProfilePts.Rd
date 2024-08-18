@@ -33,7 +33,8 @@ Transect points from a origin through a point or with a bearing and to the oppos
 require(terra)
 TCi <- vect(cbind(c(154.1,154),c(-26.1,-26)),"lines",crs="epsg:4283") #track line segment
 TCi$PRES <- 950
-TCi$RMW <- 40
+TCi$RMAX <- 40
+TCi$B <- 1.4
 TCi$ISO_TIME <- "2022-10-04 20:00:00"
 TCi$LON <- geom(TCi)[1,3]
 TCi$LAT <- geom(TCi)[1,4]

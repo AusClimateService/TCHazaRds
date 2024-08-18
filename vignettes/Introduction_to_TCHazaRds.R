@@ -29,7 +29,7 @@ TC <- vect(system.file("extdata/YASI/YASI.shp", package="TCHazaRds"))
 TC$PRES <- TC$BOM_PRES #different agencies each provide a PRES, you need to chose one. 
 TC$STORM_SPD = TC$STORM_SPD/1.94 #provided as knots, convert to m/s
 TC$thetaFm = 90-returnBearing(TC) #direction of the heading of the TC (Cartesian, clockwise from x axis)
-TCi = TC[47]
+TCi = TC[46]
 
 ## -----------------------------------------------------------------------------
 paramsTable = read.csv(system.file("extdata/tuningParams/defult_params.csv",package = "TCHazaRds"))
@@ -39,7 +39,7 @@ knitr::kable(paramsTable,caption = "Parameter file")
 ## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------
 r = rast(xmin = 145,xmax=149,ymin = -19,ymax = -16.5,resolution=.01)
 values(r) = 0
-GEO_land = land_geometry(r,r)
+#GEO_land = land_geometry(r,r)
 
 #
 land_v <- vect(system.file("extdata/OSM_500m_QLD/OSM_500m_QLD.shp", package="TCHazaRds"))
@@ -47,19 +47,23 @@ land_r = rasterize(land_v,r,touches=TRUE,background=0)
 inland_proximity = terra::costDist(land_r,target = 0,scale=1)
 GEO_land = land_geometry(land_r,inland_proximity)
 
-plot(inland_proximity,main = "Inland Distance (m)")
-plot(TC,add=TRUE)
+#plot(inland_proximity,main = "Inland Distance (m)")
+#plot(TC,add=TRUE)
 
 
 ## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------
 ats = seq(0, 65, length=14)
-HAZi = TCHazaRdsWindField(GEO_land = GEO_land,TC = TCi,paramsTable=paramsTable)
+HAZi = TCHazaRdsWindField(GEO_land = GEO_land,TC = TCi,paramsTable=paramsTable,returnWaves = TRUE)
 library(raster)       # convert for raster plots
 dummy = raster::raster() 
 TC_sp = list("sp.lines",as(TC,"Spatial"),col="black")
-sp::spplot(HAZi,"Sw",at=ats,sp.layout = TC_sp)
+sp::spplot(HAZi,"Sw",at=ats,sp.layout = TC_sp,main = "Surface wind speed [m/s]")
+ats = seq(0, 16, length=9)
+sp::spplot(HAZi,"Hs0",at=ats,sp.layout = TC_sp,main = "Deep water significant wave height [m]")
+
 
 ## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------
+ats = seq(0, 65, length=14)
 if (.Platform$OS.type == "windows"){
   UV = as(c(HAZi["Uw"],HAZi["Vw"]),"Raster") #need to convert back to raster
   rasterVis::vectorplot(UV, isField='dXY', col.arrows='white', aspX=0.002,aspY=0.002,at=ats ,

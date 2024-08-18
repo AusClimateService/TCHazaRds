@@ -101,6 +101,9 @@ land_geometry = function(dem,inland_proximity,returnpoints=FALSE){
 #' @param betaModel empirical model for TC shape parameter beta (dimensionless Beta)
 #' @param eP background environmental pressure (hPa)
 #' @param rho air density
+#' @param RMAX If params rMaxModel value is NA, use input TC$RMAX
+#' @param VMAX If params rMaxModel value is NA, use input TC$VMAX
+#' @param B If params rMaxModel value is NA, use input TC$B
 #'
 #' @return list of track data inclining the rMax vMax and Beta.
 #' @export
@@ -113,10 +116,13 @@ land_geometry = function(dem,inland_proximity,returnpoints=FALSE){
 #' require(terra)
 #' TCi <- vect(system.file("extdata/YASI/YASI.shp", package="TCHazaRds"))
 #' TCi$PRES <- TCi$BOM_PRES
+#' TCi$RMAX <- TCi$BOM_RMW/1.852 #convert from nautical miles to km
+#' TCi$VMAX <- TCi$BOM_WIND*1.94 #convert from knots to m/s
+#' TCi$B <- 1.4
 #' t1 <- strptime("2011-02-01 09:00:00","%Y-%m-%d %H:%M:%S", tz = "UTC") #first date in POSIX format
 #' t2 <- strptime(rev(TCi$ISO_TIME)[1],"%Y-%m-%d %H:%M:%S", tz = "UTC") #last date in POSIX format
 #' outdate <- seq(t1,t2,"hour") #array sequence from t1 to t2 stepping by “hour”
-
+#' # defult along track parameters are calculated
 #' TCil = update_Track(outdate = outdate,
 #'                    indate = strptime(TCi$ISO_TIME,"%Y-%m-%d %H:%M:%S", tz = "UTC"),
 #'                    TClons = TCi$LON,
@@ -128,18 +134,42 @@ land_geometry = function(dem,inland_proximity,returnpoints=FALSE){
 #'                    vMaxModel=params$vMaxModel,
 #'                    betaModel=params$betaModel,
 #'                    eP = params$eP,
-#'                    rho = params$rhoa)
-#'
+#'                    rho = params$rhoa,
+#'                    RMAX = TCi$RMAX,
+#'                    VMAX = TCi$VMAX,
+#'                    B = TCi$B
+#'                    )
+#' # 'observed' along tack parameters are calculated (#Model = NA)                   
+#' TCil = update_Track(outdate = outdate,
+#'                    indate = strptime(TCi$ISO_TIME,"%Y-%m-%d %H:%M:%S", tz = "UTC"),
+#'                    TClons = TCi$LON,
+#'                    TClats = TCi$LAT,
+#'                    vFms=TCi$STORM_SPD,
+#'                   thetaFms=TCi$thetaFm,
+#'                    cPs=TCi$PRES,
+#'                   rMaxModel=NA,
+#'                    vMaxModel=NA,
+#'                    betaModel=NA,
+#'                    eP = params$eP,
+#'                    rho = params$rhoa,
+#'                    RMAX = TCi$RMAX,
+#'                    VMAX = TCi$VMAX,
+#'                    B = TCi$B
+#'                    )
 update_Track <- function(outdate = NULL, indate, TClons, TClats, vFms, thetaFms, cPs,
-                         rMaxModel, vMaxModel, betaModel, eP, rho = NULL) {
+                         rMaxModel, vMaxModel, betaModel, eP, rho = NULL,RMAX,VMAX,B) {
   TRACK <- list()
   TRACK$eP <- eP
   TRACK$rho <- rho
+  if(is.na(rMaxModel) & is.null(RMAX)) stop("If params rMaxModel value is NA, please provide TC$RMAX")
+  if(is.na(vMaxModel) & is.null(VMAX)) stop("If params vMaxModel value is NA, please provide TC$VMAX")
+  if(is.na(betaModel) & is.null(B)) stop("If params betaModel value is NA, please provide TC$B")
+  
 
   odatei <- as.numeric(indate)
-
+  indatei <- as.numeric(indate)
   if (!is.null(outdate[1])) { # interpolate track to out time steps with approx fun
-    indatei <- as.numeric(indate)
+    
     outdatei <- as.numeric(outdate)
     odatei <- stats::approx(indatei, indatei, outdatei)$y
     TClons <- stats::approx(indatei, TClons, outdatei)$y
@@ -176,8 +206,12 @@ update_Track <- function(outdate = NULL, indate, TClons, TClats, vFms, thetaFms,
     TRACK$rMax <- rMaxModel # use the input values
   }
   if (length(rMaxModel) == 1) {
-    TRACK$rMax <- rMax_modelsR(rMaxModel = rMaxModel, TClats = TRACK$TClats, cPs = TRACK$cPs, eP = eP,
+    if(!is.na(rMaxModel)) if(rMaxModel <= 4) TRACK$rMax <- rMax_modelsR(rMaxModel = rMaxModel, TClats = TRACK$TClats, cPs = TRACK$cPs, eP = eP,
                                dPdt = TRACK$dPdt, vFms = TRACK$vFms, rho = rho)
+    if(is.na(rMaxModel)) {
+      if (is.null(outdate[1])) TRACK$rMax <- RMAX
+      if (!is.null(outdate[1])) TRACK$rMax <- stats::approx(indatei, RMAX, outdatei)$y[s]
+    }
   }
 
   # Compute the Coriolis parameter
@@ -190,17 +224,26 @@ update_Track <- function(outdate = NULL, indate, TClons, TClats, vFms, thetaFms,
     TRACK$vMax <- vMaxModel
   }
   if (length(vMaxModel) == 1) {
-    TRACK$vMax <- vMax_modelsR(vMaxModel = vMaxModel, cPs = TRACK$cPs, eP = eP, vFms = TRACK$vFms,
+    if(!is.na(vMaxModel)) if(vMaxModel <= 4) TRACK$vMax <- vMax_modelsR(vMaxModel = vMaxModel, cPs = TRACK$cPs, eP = eP, vFms = TRACK$vFms,
                                TClats = TRACK$TClats, dPdt = TRACK$dPdt, beta = 1.3, rho = rho) # Holland 80 beta = 1.3
+    if(is.na(vMaxModel)) {
+      if(is.null(outdate[1])) TRACK$vMax <- VMAX
+      if(!is.null(outdate[1])) TRACK$vMax <- stats::approx(indatei, VMAX, outdatei)$y[s]
+    }
   }
 
   # Beta parameter model selection
   if (length(betaModel) > 1) {
     beta <- betaModel
   }
-  TRACK$beta <- beta_modelsR(betaModel = betaModel, vMax = TRACK$vMax, rMax = TRACK$rMax, cPs = TRACK$cPs,
+  if (length(betaModel) == 1) {
+    if(!is.na(betaModel)) if(betaModel <= 4) TRACK$beta <- beta_modelsR(betaModel = betaModel, vMax = TRACK$vMax, rMax = TRACK$rMax, cPs = TRACK$cPs,
                              eP = TRACK$eP, vFms = TRACK$vFms, TClats = TRACK$TClats, dPdt = TRACK$dPdt)
-
+    if(is.na(betaModel)) {
+      if(is.null(outdate[1]))TRACK$beta <- B
+      if(!is.null(outdate[1])) TRACK$beta <- stats::approx(indatei, B, outdatei)$y[s]
+    }
+  }
   return(TRACK)
 }
 
@@ -238,7 +281,9 @@ TCvectInterp = function(outdate = NULL, TC, paramsTable) {
   TRACK <- update_Track(outdate = outdate, indate = indate, TClons = TC$LON, TClats = TC$LAT,
                         vFms = TC$STORM_SPD, thetaFms = TC$thetaFm, cPs = TC$PRES,
                         rMaxModel = params$rMaxModel, vMaxModel = params$vMaxModel,
-                        betaModel = params$betaModel, eP = params$eP, rho = params$rhoa)
+                        betaModel = params$betaModel, eP = params$eP, rho = params$rhoa,
+                        RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B
+                        )
 
   # Create a spatial vector from the interpolated track data
   v <- terra::vect(cbind(TRACK$TClons, TRACK$TClats))
@@ -315,7 +360,8 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
   TRACK <- update_Track(outdate = outdate, indate = indate, TClons = TC$LON, TClats = TC$LAT,
                         vFms = TC$STORM_SPD, thetaFms = TC$thetaFm, cPs = TC$PRES,
                         rMaxModel = params$rMaxModel, vMaxModel = params$vMaxModel,
-                        betaModel = params$betaModel, eP = params$eP, rho = params$rhoa)
+                        betaModel = params$betaModel, eP = params$eP, rho = params$rhoa,
+                        RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B)
 
   # Extract geographical land information
   lon <- GEO_land$lons
@@ -464,7 +510,9 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
 #'
 #' TCi = vect(cbind(c(154,154),c(-26.1,-26)),"lines",crs="epsg:4283") #track line segment
 #' TCi$PRES = 950
-#' TCi$RMW = 40
+#' TCi$RMAX = 40
+#' TCi$VMAX = 60
+#' TCi$B = 1.4
 #' TCi$ISO_TIME = "2022-10-04 20:00:00"
 #' TCi$LON = geom(TCi)[1,3]
 #' TCi$LAT = geom(TCi)[1,4]
@@ -499,7 +547,7 @@ TCHazaRdsWindField <- function(GEO_land, TC, paramsTable,returnWaves = FALSE) {
     # Reformat track data
     TRACK <- update_Track(outdate = NULL, indate = indate, TClons = TC$LON, TClats = TC$LAT, vFms = TC$STORM_SPD, thetaFms = TC$thetaFm,
                           cPs = TC$PRES, rMaxModel = params$rMaxModel, vMaxModel = params$vMaxModel, betaModel = params$betaModel,
-                          eP = params$eP, rho = params$rhoa)
+                          eP = params$eP, rho = params$rhoa,RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B)
   } else if (methods::is(TC, "data.frame")) {
     TRACK <- TC
     indate <- strptime("1970-01-01 00:00:00", "%Y-%m-%d %H:%M:%S", tz = "UTC") + TRACK$odatei
@@ -705,7 +753,9 @@ TCHazaRdsWindField <- function(GEO_land, TC, paramsTable,returnWaves = FALSE) {
 #'
 #' TCi = vect(cbind(c(154,154),c(-26.1,-26)),"lines",crs="epsg:4283") #track line segment
 #' TCi$PRES = 950
-#' TCi$RMW = 40
+#' TCi$RMAX = 40
+#' TCi$VMAX = 60
+#' TCi$B = 1.4
 #' TCi$ISO_TIME = "2022-10-04 20:00:00"
 #' TCi$LON = geom(TCi)[1,3]
 #' TCi$LAT = geom(TCi)[1,4]
@@ -737,7 +787,8 @@ TCHazaRdsWindFields <- function(outdate = NULL, GEO_land, TC, paramsTable, outfi
   TRACK <- as.data.frame(update_Track(outdate = outdate, indate = indate, TClons = TC$LON, TClats = TC$LAT,
                                       vFms = TC$STORM_SPD, thetaFms = TC$thetaFm, cPs = TC$PRES,
                                       rMaxModel = params$rMaxModel, vMaxModel = params$vMaxModel,
-                                      betaModel = params$betaModel, eP = params$eP, rho = params$rhoa))
+                                      betaModel = params$betaModel, eP = params$eP, rho = params$rhoa,
+                                      RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B))
 
   nt <- nrow(TRACK)
   TRACK$PRES <- TRACK$cPs
@@ -836,9 +887,9 @@ rMax_modelsR <- function(rMaxModel, TClats, cPs, eP, R175ms = 150, dPdt = NULL, 
   #3: Vickery & Wadhera (2008) eq 11
   #4: Takagi & Wu (2016)
   #5: Chavas & Knaff (2022)
+  if(is.na(rMaxModel)) stop("rMaxModel must be a value from 0 to 5, see params file") 
   dP <- (eP - cPs)
   dP[dP < 1] <- 1
-
   if (rMaxModel == 0) {
     # Powell Soukup et al (2005) updated to Arthur 2021
     rMaxs <- exp(3.543 - 0.00378 * dP + 0.813 * exp(-0.0022 * (dP)^2) + 0.00157 * (TClats^2))
@@ -907,12 +958,13 @@ vMax_modelsR <- function(vMaxModel, cPs, eP, vFms = NULL, TClats = NULL, dPdt = 
 
   dP = eP - cPs
   dP[dP < 1] = 1 # Needs to be at least lower than the background
+  if(is.na(vMaxModel)) stop("vMaxModel must be a value from 0 to 4, see params file") 
 
   if (vMaxModel == 0) {
     # see https://github.com/GeoscienceAustralia/tcha/blob/6e6de8df2b3fd5c9287d060f1f7f1d4ff63e87a7/wind-radii/rmax_fit.py#L205
     vMax = 0.6252 * sqrt(dP * 100)
   }
-
+  
   if (vMaxModel == 1) {
     x = 0.6 * (1 - dP / 215)
     bs = -4.4e-5 * dP^2 + 0.01 * dP + 0.03 * dPdt - 0.014 * abs(TClats) + 0.15 * vFms^x + 1
@@ -972,7 +1024,8 @@ beta_modelsR <- function(betaModel, vMax, rMax, cPs, eP, vFms, TClats, dPdt, rho
 
   dP <- (eP - cPs)
   dP[dP < 1] <- 1
-
+  if(is.na(betaModel)) stop("betaModel must be a value from 0 to 4, see params file") 
+  
   if (betaModel == 0) {
     beta <- 1.881093 - 0.010917 * abs(TClats) - 0.005567 * rMax # Powell (2005)
     beta[beta < 0.8] <- 0.8
@@ -1034,7 +1087,8 @@ inlandWindDecay = function(d,a = c(0.66,1,0.4)){
 #' require(terra)
 #' TCi <- vect(cbind(c(154.1,154),c(-26.1,-26)),"lines",crs="epsg:4283") #track line segment
 #' TCi$PRES <- 950
-#' TCi$RMW <- 40
+#' TCi$RMAX <- 40
+#' TCi$B <- 1.4
 #' TCi$ISO_TIME <- "2022-10-04 20:00:00"
 #' TCi$LON <- geom(TCi)[1,3]
 #' TCi$LAT <- geom(TCi)[1,4]
@@ -1097,7 +1151,9 @@ TCProfilePts = function(TC_line,Through_point=NULL,bear=NULL,length =200,step=2)
 #'
 #' TCi = vect(cbind(c(154,154),c(-26.1,-26)),"lines",crs="epsg:4283") #track line segment
 #' TCi$PRES = 950
-#' TCi$RMW = 40
+#' TCi$RMAX = 40
+#' TCi$VMAX = 60
+#' TCi$B = 1.4
 #' TCi$ISO_TIME = "2022-10-04 20:00:00"
 #' TCi$LON = geom(TCi)[1,3]
 #' TCi$LAT = geom(TCi)[1,4]
@@ -1130,7 +1186,8 @@ TCHazaRdsWindProfile = function(GEO_land,TC,paramsTable){
     indate=strptime(TC$ISO_TIME,"%Y-%m-%d %H:%M:%S",tz = "UTC")
     #reformat
     TRACK = update_Track(outdate=NULL,indate=indate,TClons=TC$LON,TClats=TC$LAT,vFms=TC$STORM_SPD,thetaFms=TC$thetaFm,cPs=TC$PRES,
-                         rMaxModel=params$rMaxModel,vMaxModel=params$vMaxModel,betaModel=params$betaModel,eP = params$eP,rho = params$rhoa)
+                         rMaxModel=params$rMaxModel,vMaxModel=params$vMaxModel,betaModel=params$betaModel,eP = params$eP,rho = params$rhoa,
+                         RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B)
   }
   if(methods::is(TC,"data.frame")){
     TRACK = TC
