@@ -5,7 +5,9 @@ status](https://www.r-pkg.org/badges/version/TCHazaRds)](https://cran.r-project.
 
 <img align="right" width="250" src="TCHazaRd_logo.png">
 
-`TCHazaRds` is an **R** package for Tropical Cyclone (Hurricane, Typhoon) Spatial Hazard Modelling. There is a tutorial in [TCHazaRds/vignettes](https://htmlpreview.github.io/?https://github.com/AusClimateService/TCHazaRds/blob/main/vignettes/Introduction_to_TCHazaRds.html). The code includes parametrisations such as wind reduction factors (e.g., [Harper et. al. 2001](https://data.longpaddock.qld.gov.au/static/publications/vulnerability-to-cyclones/stage1.pdf)) to estimate surface mean 10 min wind speeds from Cyclone tracks. Further modelling details can be found in [O'Grady et. al. 2024](https://journals.ametsoc.org/view/journals/mwre/152/1/MWR-D-23-0063.1.xml).Ocean waves, along with enhanced reduction factor modelling and parameters, will be available in **version 1.2.0 (August 2024)**.
+`TCHazaRds` is an **R** package for Tropical Cyclone (Hurricane, Typhoon) Spatial Hazard Modelling. There is a tutorial in [TCHazaRds/vignettes](https://htmlpreview.github.io/?https://github.com/AusClimateService/TCHazaRds/blob/main/vignettes/Introduction_to_TCHazaRds.html). The code includes parametrisations such as wind reduction factors (e.g., [Harper et. al. 2001](https://data.longpaddock.qld.gov.au/static/publications/vulnerability-to-cyclones/stage1.pdf)) to estimate surface mean 10 min wind speeds from Cyclone tracks. Further modelling details can be found in [O'Grady et. al. 2024](https://journals.ametsoc.org/view/journals/mwre/152/1/MWR-D-23-0063.1.xml).  
+
+Ocean waves, along with enhanced reduction factor modelling and parameters, are now available in **version 1.1.0 (August 2024)**.
 
 ## Installation
 
