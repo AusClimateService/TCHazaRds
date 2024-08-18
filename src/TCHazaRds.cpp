@@ -571,7 +571,7 @@ NumericMatrix McConochieWindFieldPi(NumericVector rMax, NumericVector vMax, Nume
   float pi = 3.141592f;
 	float thetaMaxAbsolute, asym, Vsf, phi,swrf;
 	float thetaFmRAD;
-  float sf;
+  float sf, fabsVsf;
   sf = f/fabs(f);
   float piOn180 = pi / 180.0f;
 
@@ -606,16 +606,17 @@ NumericMatrix McConochieWindFieldPi(NumericVector rMax, NumericVector vMax, Nume
 		Vsf = Vi + asym;
 
 		swrf = 0.81f;
+		fabsVsf = fabs(Vsf);
 		// had an extra ;
-		if (abs(Vsf) >= 6.0f)
+		if (fabsVsf >= 6.0f)
 		{
-			swrf = 0.81f - (2.93f * (fabs(Vsf) - 6.0f) / 1000.0f);
+			swrf = 0.81f - (2.93f * (fabsVsf - 6.0f) / 1000.0f);
 		}
-		if (abs(Vsf) >= 19.5f)
+		if (fabsVsf >= 19.5f)
 		{
-			swrf = 0.77f - (4.31f * (fabs(Vsf) - 19.5f) / 1000.0f);
+			swrf = 0.77f - (4.31f * (fabsVsf - 19.5f) / 1000.0f);
 		}
-		if (abs(Vsf) >= 45.0f)
+		if (fabsVsf >= 45.0f)
 		{
 			swrf = 0.66f;
 		}
