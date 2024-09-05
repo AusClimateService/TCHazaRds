@@ -4,7 +4,7 @@
 \alias{DoubleHollandWindProfile}
 \title{Double Holland Wind Profile}
 \usage{
-DoubleHollandWindProfile(f, vMax, rMax, dP, cP, rho, beta, R)
+DoubleHollandWindProfile(f, vMax, rMax, rMax2, dP, cP, rho, beta, R)
 }
 \arguments{
 \item{f}{single coriolis parameter at the centre of TC in hz}
@@ -12,6 +12,8 @@ DoubleHollandWindProfile(f, vMax, rMax, dP, cP, rho, beta, R)
 \item{vMax}{maximum wind velocity calculation in m/s}
 
 \item{rMax}{radius of maximum winds in km}
+
+\item{rMax2}{radius of outer radial winds in km}
 
 \item{dP}{pressure differential, environmental less TC central pressure in hPa}
 

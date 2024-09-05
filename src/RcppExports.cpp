@@ -85,52 +85,55 @@ BEGIN_RCPP
 END_RCPP
 }
 // NewHollandWindProfilePi
-NumericMatrix NewHollandWindProfilePi(NumericVector f, NumericVector rMax, NumericVector dP, float rho, NumericVector R, NumericVector vMax, NumericVector beta);
-RcppExport SEXP _TCHazaRds_NewHollandWindProfilePi(SEXP fSEXP, SEXP rMaxSEXP, SEXP dPSEXP, SEXP rhoSEXP, SEXP RSEXP, SEXP vMaxSEXP, SEXP betaSEXP) {
+NumericMatrix NewHollandWindProfilePi(NumericVector f, NumericVector rMax, NumericVector rMax2, NumericVector dP, float rho, NumericVector R, NumericVector vMax, NumericVector beta);
+RcppExport SEXP _TCHazaRds_NewHollandWindProfilePi(SEXP fSEXP, SEXP rMaxSEXP, SEXP rMax2SEXP, SEXP dPSEXP, SEXP rhoSEXP, SEXP RSEXP, SEXP vMaxSEXP, SEXP betaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type f(fSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type rMax(rMaxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type rMax2(rMax2SEXP);
     Rcpp::traits::input_parameter< NumericVector >::type dP(dPSEXP);
     Rcpp::traits::input_parameter< float >::type rho(rhoSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type R(RSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type vMax(vMaxSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type beta(betaSEXP);
-    rcpp_result_gen = Rcpp::wrap(NewHollandWindProfilePi(f, rMax, dP, rho, R, vMax, beta));
+    rcpp_result_gen = Rcpp::wrap(NewHollandWindProfilePi(f, rMax, rMax2, dP, rho, R, vMax, beta));
     return rcpp_result_gen;
 END_RCPP
 }
 // DoubleHollandWindProfilePi
-NumericMatrix DoubleHollandWindProfilePi(NumericVector f, NumericVector vMax, NumericVector rMax, NumericVector dP, NumericVector cP, float rho, NumericVector beta, NumericVector R);
-RcppExport SEXP _TCHazaRds_DoubleHollandWindProfilePi(SEXP fSEXP, SEXP vMaxSEXP, SEXP rMaxSEXP, SEXP dPSEXP, SEXP cPSEXP, SEXP rhoSEXP, SEXP betaSEXP, SEXP RSEXP) {
+NumericMatrix DoubleHollandWindProfilePi(NumericVector f, NumericVector vMax, NumericVector rMax, NumericVector rMax2, NumericVector dP, NumericVector cP, float rho, NumericVector beta, NumericVector R);
+RcppExport SEXP _TCHazaRds_DoubleHollandWindProfilePi(SEXP fSEXP, SEXP vMaxSEXP, SEXP rMaxSEXP, SEXP rMax2SEXP, SEXP dPSEXP, SEXP cPSEXP, SEXP rhoSEXP, SEXP betaSEXP, SEXP RSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type f(fSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type vMax(vMaxSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type rMax(rMaxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type rMax2(rMax2SEXP);
     Rcpp::traits::input_parameter< NumericVector >::type dP(dPSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type cP(cPSEXP);
     Rcpp::traits::input_parameter< float >::type rho(rhoSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type beta(betaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type R(RSEXP);
-    rcpp_result_gen = Rcpp::wrap(DoubleHollandWindProfilePi(f, vMax, rMax, dP, cP, rho, beta, R));
+    rcpp_result_gen = Rcpp::wrap(DoubleHollandWindProfilePi(f, vMax, rMax, rMax2, dP, cP, rho, beta, R));
     return rcpp_result_gen;
 END_RCPP
 }
 // DoubleHollandPressureProfilePi
-NumericVector DoubleHollandPressureProfilePi(NumericVector rMax, NumericVector dP, NumericVector cP, NumericVector beta, NumericVector R);
-RcppExport SEXP _TCHazaRds_DoubleHollandPressureProfilePi(SEXP rMaxSEXP, SEXP dPSEXP, SEXP cPSEXP, SEXP betaSEXP, SEXP RSEXP) {
+NumericVector DoubleHollandPressureProfilePi(NumericVector rMax, NumericVector rMax2, NumericVector dP, NumericVector cP, NumericVector beta, NumericVector R);
+RcppExport SEXP _TCHazaRds_DoubleHollandPressureProfilePi(SEXP rMaxSEXP, SEXP rMax2SEXP, SEXP dPSEXP, SEXP cPSEXP, SEXP betaSEXP, SEXP RSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< NumericVector >::type rMax(rMaxSEXP);
+    Rcpp::traits::input_parameter< NumericVector >::type rMax2(rMax2SEXP);
     Rcpp::traits::input_parameter< NumericVector >::type dP(dPSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type cP(cPSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type beta(betaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type R(RSEXP);
-    rcpp_result_gen = Rcpp::wrap(DoubleHollandPressureProfilePi(rMax, dP, cP, beta, R));
+    rcpp_result_gen = Rcpp::wrap(DoubleHollandPressureProfilePi(rMax, rMax2, dP, cP, beta, R));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -248,52 +251,55 @@ BEGIN_RCPP
 END_RCPP
 }
 // NewHollandWindProfile
-NumericMatrix NewHollandWindProfile(float f, float rMax, float dP, float rho, NumericVector R, float vMax, float beta);
-RcppExport SEXP _TCHazaRds_NewHollandWindProfile(SEXP fSEXP, SEXP rMaxSEXP, SEXP dPSEXP, SEXP rhoSEXP, SEXP RSEXP, SEXP vMaxSEXP, SEXP betaSEXP) {
+NumericMatrix NewHollandWindProfile(float f, float rMax, float rMax2, float dP, float rho, NumericVector R, float vMax, float beta);
+RcppExport SEXP _TCHazaRds_NewHollandWindProfile(SEXP fSEXP, SEXP rMaxSEXP, SEXP rMax2SEXP, SEXP dPSEXP, SEXP rhoSEXP, SEXP RSEXP, SEXP vMaxSEXP, SEXP betaSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< float >::type f(fSEXP);
     Rcpp::traits::input_parameter< float >::type rMax(rMaxSEXP);
+    Rcpp::traits::input_parameter< float >::type rMax2(rMax2SEXP);
     Rcpp::traits::input_parameter< float >::type dP(dPSEXP);
     Rcpp::traits::input_parameter< float >::type rho(rhoSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type R(RSEXP);
     Rcpp::traits::input_parameter< float >::type vMax(vMaxSEXP);
     Rcpp::traits::input_parameter< float >::type beta(betaSEXP);
-    rcpp_result_gen = Rcpp::wrap(NewHollandWindProfile(f, rMax, dP, rho, R, vMax, beta));
+    rcpp_result_gen = Rcpp::wrap(NewHollandWindProfile(f, rMax, rMax2, dP, rho, R, vMax, beta));
     return rcpp_result_gen;
 END_RCPP
 }
 // DoubleHollandWindProfile
-NumericMatrix DoubleHollandWindProfile(float f, float vMax, float rMax, float dP, float cP, float rho, float beta, NumericVector R);
-RcppExport SEXP _TCHazaRds_DoubleHollandWindProfile(SEXP fSEXP, SEXP vMaxSEXP, SEXP rMaxSEXP, SEXP dPSEXP, SEXP cPSEXP, SEXP rhoSEXP, SEXP betaSEXP, SEXP RSEXP) {
+NumericMatrix DoubleHollandWindProfile(float f, float vMax, float rMax, float rMax2, float dP, float cP, float rho, float beta, NumericVector R);
+RcppExport SEXP _TCHazaRds_DoubleHollandWindProfile(SEXP fSEXP, SEXP vMaxSEXP, SEXP rMaxSEXP, SEXP rMax2SEXP, SEXP dPSEXP, SEXP cPSEXP, SEXP rhoSEXP, SEXP betaSEXP, SEXP RSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< float >::type f(fSEXP);
     Rcpp::traits::input_parameter< float >::type vMax(vMaxSEXP);
     Rcpp::traits::input_parameter< float >::type rMax(rMaxSEXP);
+    Rcpp::traits::input_parameter< float >::type rMax2(rMax2SEXP);
     Rcpp::traits::input_parameter< float >::type dP(dPSEXP);
     Rcpp::traits::input_parameter< float >::type cP(cPSEXP);
     Rcpp::traits::input_parameter< float >::type rho(rhoSEXP);
     Rcpp::traits::input_parameter< float >::type beta(betaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type R(RSEXP);
-    rcpp_result_gen = Rcpp::wrap(DoubleHollandWindProfile(f, vMax, rMax, dP, cP, rho, beta, R));
+    rcpp_result_gen = Rcpp::wrap(DoubleHollandWindProfile(f, vMax, rMax, rMax2, dP, cP, rho, beta, R));
     return rcpp_result_gen;
 END_RCPP
 }
 // DoubleHollandPressureProfile
-NumericVector DoubleHollandPressureProfile(float rMax, float dP, float cP, float beta, NumericVector R);
-RcppExport SEXP _TCHazaRds_DoubleHollandPressureProfile(SEXP rMaxSEXP, SEXP dPSEXP, SEXP cPSEXP, SEXP betaSEXP, SEXP RSEXP) {
+NumericVector DoubleHollandPressureProfile(float rMax, float rMax2, float dP, float cP, float beta, NumericVector R);
+RcppExport SEXP _TCHazaRds_DoubleHollandPressureProfile(SEXP rMaxSEXP, SEXP rMax2SEXP, SEXP dPSEXP, SEXP cPSEXP, SEXP betaSEXP, SEXP RSEXP) {
 BEGIN_RCPP
     Rcpp::RObject rcpp_result_gen;
     Rcpp::RNGScope rcpp_rngScope_gen;
     Rcpp::traits::input_parameter< float >::type rMax(rMaxSEXP);
+    Rcpp::traits::input_parameter< float >::type rMax2(rMax2SEXP);
     Rcpp::traits::input_parameter< float >::type dP(dPSEXP);
     Rcpp::traits::input_parameter< float >::type cP(cPSEXP);
     Rcpp::traits::input_parameter< float >::type beta(betaSEXP);
     Rcpp::traits::input_parameter< NumericVector >::type R(RSEXP);
-    rcpp_result_gen = Rcpp::wrap(DoubleHollandPressureProfile(rMax, dP, cP, beta, R));
+    rcpp_result_gen = Rcpp::wrap(DoubleHollandPressureProfile(rMax, rMax2, dP, cP, beta, R));
     return rcpp_result_gen;
 END_RCPP
 }
@@ -357,9 +363,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_TCHazaRds_RankineWindProfilePi", (DL_FUNC) &_TCHazaRds_RankineWindProfilePi, 4},
     {"_TCHazaRds_HollandWindProfilePi", (DL_FUNC) &_TCHazaRds_HollandWindProfilePi, 7},
     {"_TCHazaRds_HollandPressureProfilePi", (DL_FUNC) &_TCHazaRds_HollandPressureProfilePi, 5},
-    {"_TCHazaRds_NewHollandWindProfilePi", (DL_FUNC) &_TCHazaRds_NewHollandWindProfilePi, 7},
-    {"_TCHazaRds_DoubleHollandWindProfilePi", (DL_FUNC) &_TCHazaRds_DoubleHollandWindProfilePi, 8},
-    {"_TCHazaRds_DoubleHollandPressureProfilePi", (DL_FUNC) &_TCHazaRds_DoubleHollandPressureProfilePi, 5},
+    {"_TCHazaRds_NewHollandWindProfilePi", (DL_FUNC) &_TCHazaRds_NewHollandWindProfilePi, 8},
+    {"_TCHazaRds_DoubleHollandWindProfilePi", (DL_FUNC) &_TCHazaRds_DoubleHollandWindProfilePi, 9},
+    {"_TCHazaRds_DoubleHollandPressureProfilePi", (DL_FUNC) &_TCHazaRds_DoubleHollandPressureProfilePi, 6},
     {"_TCHazaRds_HubbertWindFieldPi", (DL_FUNC) &_TCHazaRds_HubbertWindFieldPi, 7},
     {"_TCHazaRds_McConochieWindFieldPi", (DL_FUNC) &_TCHazaRds_McConochieWindFieldPi, 8},
     {"_TCHazaRds_KepertWindFieldPi", (DL_FUNC) &_TCHazaRds_KepertWindFieldPi, 8},
@@ -367,9 +373,9 @@ static const R_CallMethodDef CallEntries[] = {
     {"_TCHazaRds_JelesnianskiWindProfile", (DL_FUNC) &_TCHazaRds_JelesnianskiWindProfile, 4},
     {"_TCHazaRds_HollandWindProfile", (DL_FUNC) &_TCHazaRds_HollandWindProfile, 7},
     {"_TCHazaRds_HollandPressureProfile", (DL_FUNC) &_TCHazaRds_HollandPressureProfile, 5},
-    {"_TCHazaRds_NewHollandWindProfile", (DL_FUNC) &_TCHazaRds_NewHollandWindProfile, 7},
-    {"_TCHazaRds_DoubleHollandWindProfile", (DL_FUNC) &_TCHazaRds_DoubleHollandWindProfile, 8},
-    {"_TCHazaRds_DoubleHollandPressureProfile", (DL_FUNC) &_TCHazaRds_DoubleHollandPressureProfile, 5},
+    {"_TCHazaRds_NewHollandWindProfile", (DL_FUNC) &_TCHazaRds_NewHollandWindProfile, 8},
+    {"_TCHazaRds_DoubleHollandWindProfile", (DL_FUNC) &_TCHazaRds_DoubleHollandWindProfile, 9},
+    {"_TCHazaRds_DoubleHollandPressureProfile", (DL_FUNC) &_TCHazaRds_DoubleHollandPressureProfile, 6},
     {"_TCHazaRds_HubbertWindField", (DL_FUNC) &_TCHazaRds_HubbertWindField, 7},
     {"_TCHazaRds_McConochieWindField", (DL_FUNC) &_TCHazaRds_McConochieWindField, 8},
     {"_TCHazaRds_KepertWindField", (DL_FUNC) &_TCHazaRds_KepertWindField, 8},

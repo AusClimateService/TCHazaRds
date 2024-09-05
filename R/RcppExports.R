@@ -69,6 +69,7 @@ HollandPressureProfilePi <- function(rMax, dP, cP, beta, R) {
 #' @description Wind profile time series at a grid point. Holland et al. 2010.  In this version, the exponent is allowed to vary linearly outside the radius of maximum wind. I.e. rather than take the square root, the exponent varies around 0.5.Currently this version does not have a corresponding vorticity profile set up in wind Vorticity, so it cannot be applied in some wind field modelling.
 #' @param f single coriolis parameter at the centre of TC in hz
 #' @param rMax radius of maximum winds in km
+#' @param rMax2 radius of outer 17ms winds in km
 #' @param dP pressure differential, environmental less TC central pressure in hPa
 #' @param rho density of air in Kg/m3
 #' @param R vector of distances from grid points to TC centre in km
@@ -76,8 +77,8 @@ HollandPressureProfilePi <- function(rMax, dP, cP, beta, R) {
 #' @param beta exponential term for Holland vortex
 #' @return array with two columns for velocity and then vorticity.
 #' //@example NewHollandWindProfilePi(-1e-4,20,20,1.15,-14,50,1.3)
-NewHollandWindProfilePi <- function(f, rMax, dP, rho, R, vMax, beta) {
-    .Call(`_TCHazaRds_NewHollandWindProfilePi`, f, rMax, dP, rho, R, vMax, beta)
+NewHollandWindProfilePi <- function(f, rMax, rMax2, dP, rho, R, vMax, beta) {
+    .Call(`_TCHazaRds_NewHollandWindProfilePi`, f, rMax, rMax2, dP, rho, R, vMax, beta)
 }
 
 #' @title Double Holland Wind Profile Time Series
@@ -85,6 +86,7 @@ NewHollandWindProfilePi <- function(f, rMax, dP, rho, R, vMax, beta) {
 #' @param f single coriolis parameter at the centre of TC in hz
 #' @param vMax maximum wind velocity calculation in m/s
 #' @param rMax radius of maximum winds in km
+#' @param rMax2 radius of outer radial winds in km
 #' @param dP pressure differential, environmental less TC central pressure in hPa
 #' @param cP TC central pressure in hPa
 #' @param rho density of air in Kg/m3
@@ -92,21 +94,22 @@ NewHollandWindProfilePi <- function(f, rMax, dP, rho, R, vMax, beta) {
 #' @param R vector of distances from grid points to TC centre in km
 #' @return array with two columns for velocity and then vorticity.
 #' //@example DoubleHollandWindProfilePi(-1e-4,20,20,10,980,1.15,1.2,50)
-DoubleHollandWindProfilePi <- function(f, vMax, rMax, dP, cP, rho, beta, R) {
-    .Call(`_TCHazaRds_DoubleHollandWindProfilePi`, f, vMax, rMax, dP, cP, rho, beta, R)
+DoubleHollandWindProfilePi <- function(f, vMax, rMax, rMax2, dP, cP, rho, beta, R) {
+    .Call(`_TCHazaRds_DoubleHollandWindProfilePi`, f, vMax, rMax, rMax2, dP, cP, rho, beta, R)
 }
 
 #' @title Double Holland Pressure Profile Time Series
 #' @description Pressure profile time series at a grid point
 #' @param rMax radius of maximum winds in km
+#' @param rMax2 radius of outer radial winds in km
 #' @param dP pressure differential, environmental less TC central pressure in hPa
 #' @param cP TC central pressure in hPa
 #' @param beta exponential term for Holland vortex
 #' @param R vector of distances from grid points to TC centre in km
 #' @return vector of pressures.
 #' //@example DoubleHollandPressureProfilePi(20,20,980,1.2,50)
-DoubleHollandPressureProfilePi <- function(rMax, dP, cP, beta, R) {
-    .Call(`_TCHazaRds_DoubleHollandPressureProfilePi`, rMax, dP, cP, beta, R)
+DoubleHollandPressureProfilePi <- function(rMax, rMax2, dP, cP, beta, R) {
+    .Call(`_TCHazaRds_DoubleHollandPressureProfilePi`, rMax, rMax2, dP, cP, beta, R)
 }
 
 #' @title Hubbert Wind Field Time Series
@@ -212,6 +215,7 @@ HollandPressureProfile <- function(rMax, dP, cP, beta, R) {
 #' @description Wind profile time series at a grid point. Holland et al. 2010.  In this version, the exponent is allowed to vary linearly outside the radius of maximum wind. I.e. rather than take the square root, the exponent varies around 0.5.Currently this version does not have a corresponding vorticity profile set up in wind Vorticity, so it cannot be applied in some wind field modelling.
 #' @param f single coriolis parameter at the centre of TC in hz
 #' @param rMax radius of maximum winds in km
+#' @param rMax2 radius of outer 17.5ms winds in km
 #' @param dP pressure differential, environmental less TC central pressure in hPa
 #' @param rho density of air in Kg/m3
 #' @param R vector of distances from grid points to TC centre in km
@@ -219,8 +223,8 @@ HollandPressureProfile <- function(rMax, dP, cP, beta, R) {
 #' @param beta exponential term for Holland vortex
 #' @return array with two columns for velocity and then vorticity.
 #' //@example NewHollandWindProfile(-1e-4,20,20,1.15,-14,50,1.3)
-NewHollandWindProfile <- function(f, rMax, dP, rho, R, vMax, beta) {
-    .Call(`_TCHazaRds_NewHollandWindProfile`, f, rMax, dP, rho, R, vMax, beta)
+NewHollandWindProfile <- function(f, rMax, rMax2, dP, rho, R, vMax, beta) {
+    .Call(`_TCHazaRds_NewHollandWindProfile`, f, rMax, rMax2, dP, rho, R, vMax, beta)
 }
 
 #' @title Double Holland Wind Profile
@@ -228,6 +232,7 @@ NewHollandWindProfile <- function(f, rMax, dP, rho, R, vMax, beta) {
 #' @param f single coriolis parameter at the centre of TC in hz
 #' @param vMax maximum wind velocity calculation in m/s
 #' @param rMax radius of maximum winds in km
+#' @param rMax2 radius of outer radial winds in km
 #' @param dP pressure differential, environmental less TC central pressure in hPa
 #' @param cP TC central pressure in hPa
 #' @param rho density of air in Kg/m3
@@ -235,21 +240,22 @@ NewHollandWindProfile <- function(f, rMax, dP, rho, R, vMax, beta) {
 #' @param R vector of distances from grid points to TC centre in km
 #' @return array with two columns for velocity and then vorticity.
 #' //@example DoubleHollandWindProfile(-1e-4,20,20,10,980,1.15,1.2,50)
-DoubleHollandWindProfile <- function(f, vMax, rMax, dP, cP, rho, beta, R) {
-    .Call(`_TCHazaRds_DoubleHollandWindProfile`, f, vMax, rMax, dP, cP, rho, beta, R)
+DoubleHollandWindProfile <- function(f, vMax, rMax, rMax2, dP, cP, rho, beta, R) {
+    .Call(`_TCHazaRds_DoubleHollandWindProfile`, f, vMax, rMax, rMax2, dP, cP, rho, beta, R)
 }
 
 #' @title Double Holland Pressure Profile
 #' @description Pressure profile at grid points
 #' @param rMax radius of maximum winds in km
+#' @param rMax2 radius of outer radial winds in km
 #' @param dP pressure differential, environmental less TC central pressure in hPa
 #' @param cP TC central pressure in hPa
 #' @param beta exponential term for Holland vortex
 #' @param R vector of distances from grid points to TC centre in km
 #' @return vector of pressures.
 #' //@example DoubleHollandPressureProfile(20,20,980,1.2,50)
-DoubleHollandPressureProfile <- function(rMax, dP, cP, beta, R) {
-    .Call(`_TCHazaRds_DoubleHollandPressureProfile`, rMax, dP, cP, beta, R)
+DoubleHollandPressureProfile <- function(rMax, rMax2, dP, cP, beta, R) {
+    .Call(`_TCHazaRds_DoubleHollandPressureProfile`, rMax, rMax2, dP, cP, beta, R)
 }
 
 #' @title Hubbert Wind Field

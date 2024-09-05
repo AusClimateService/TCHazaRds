@@ -4,12 +4,14 @@
 \alias{NewHollandWindProfilePi}
 \title{New Holland Wind Profile Time Series}
 \usage{
-NewHollandWindProfilePi(f, rMax, dP, rho, R, vMax, beta)
+NewHollandWindProfilePi(f, rMax, rMax2, dP, rho, R, vMax, beta)
 }
 \arguments{
 \item{f}{single coriolis parameter at the centre of TC in hz}
 
 \item{rMax}{radius of maximum winds in km}
+
+\item{rMax2}{radius of outer 17ms winds in km}
 
 \item{dP}{pressure differential, environmental less TC central pressure in hPa}
 

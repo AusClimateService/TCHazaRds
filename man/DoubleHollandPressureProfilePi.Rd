@@ -4,10 +4,12 @@
 \alias{DoubleHollandPressureProfilePi}
 \title{Double Holland Pressure Profile Time Series}
 \usage{
-DoubleHollandPressureProfilePi(rMax, dP, cP, beta, R)
+DoubleHollandPressureProfilePi(rMax, rMax2, dP, cP, beta, R)
 }
 \arguments{
 \item{rMax}{radius of maximum winds in km}
+
+\item{rMax2}{radius of outer radial winds in km}
 
 \item{dP}{pressure differential, environmental less TC central pressure in hPa}
 

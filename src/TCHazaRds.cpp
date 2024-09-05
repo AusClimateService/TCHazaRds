@@ -229,6 +229,7 @@ NumericVector HollandPressureProfilePi(NumericVector rMax, NumericVector dP, Num
 //' @description Wind profile time series at a grid point. Holland et al. 2010.  In this version, the exponent is allowed to vary linearly outside the radius of maximum wind. I.e. rather than take the square root, the exponent varies around 0.5.Currently this version does not have a corresponding vorticity profile set up in wind Vorticity, so it cannot be applied in some wind field modelling.
 //' @param f single coriolis parameter at the centre of TC in hz
 //' @param rMax radius of maximum winds in km
+//' @param rMax2 radius of outer 17ms winds in km
 //' @param dP pressure differential, environmental less TC central pressure in hPa
 //' @param rho density of air in Kg/m3
 //' @param R vector of distances from grid points to TC centre in km
@@ -237,7 +238,7 @@ NumericVector HollandPressureProfilePi(NumericVector rMax, NumericVector dP, Num
 //' @return array with two columns for velocity and then vorticity.
 //' //@example NewHollandWindProfilePi(-1e-4,20,20,1.15,-14,50,1.3)
 // [[Rcpp::export]]
-NumericMatrix NewHollandWindProfilePi(NumericVector f, NumericVector rMax, NumericVector dP, float rho, NumericVector R, NumericVector vMax, NumericVector beta)
+NumericMatrix NewHollandWindProfilePi(NumericVector f, NumericVector rMax, NumericVector rMax2, NumericVector dP, float rho, NumericVector R, NumericVector vMax, NumericVector beta)
 {
 	//Holland et al. 2010.  In this version, the exponent is allowed to
 	//vary linearly outside the radius of maximum wind.i.e.rather than
@@ -261,6 +262,7 @@ NumericMatrix NewHollandWindProfilePi(NumericVector f, NumericVector rMax, Numer
 	  rMaxi = rMax[i];
 	  vMaxi = vMax[i];
 	  dPi = dP[i];
+	  rGale = rMax2[i];
 	  //TClati = TClat[i];
 
 		Bs = beta[i];//(-0.000044f * powf(dPi / 100.0f, 2.0f) + 0.01 * (dPi / 100.0f) - 0.014f * fabs(TClati) + 1.0);
@@ -276,7 +278,7 @@ NumericMatrix NewHollandWindProfilePi(NumericVector f, NumericVector rMax, Numer
 		}
 
 		delta = powf(rMaxi / Ri, Bs);
-		edelta = exp(-delta);
+		edelta = exp(1-delta);
 
 		VZ(i,0) = (fi / fabs(fi)) * vMaxi * pow( delta * edelta, xx);
 		VZ(i,1) = 0.0f;// Warning dummy value
@@ -290,6 +292,7 @@ NumericMatrix NewHollandWindProfilePi(NumericVector f, NumericVector rMax, Numer
 //' @param f single coriolis parameter at the centre of TC in hz
 //' @param vMax maximum wind velocity calculation in m/s
 //' @param rMax radius of maximum winds in km
+//' @param rMax2 radius of outer radial winds in km
 //' @param dP pressure differential, environmental less TC central pressure in hPa
 //' @param cP TC central pressure in hPa
 //' @param rho density of air in Kg/m3
@@ -298,7 +301,7 @@ NumericMatrix NewHollandWindProfilePi(NumericVector f, NumericVector rMax, Numer
 //' @return array with two columns for velocity and then vorticity.
 //' //@example DoubleHollandWindProfilePi(-1e-4,20,20,10,980,1.15,1.2,50)
 // [[Rcpp::export]]
-NumericMatrix DoubleHollandWindProfilePi(NumericVector f, NumericVector vMax, NumericVector rMax, NumericVector dP, NumericVector cP, float rho, NumericVector beta, NumericVector R)
+NumericMatrix DoubleHollandWindProfilePi(NumericVector f, NumericVector vMax, NumericVector rMax, NumericVector rMax2, NumericVector dP, NumericVector cP, float rho, NumericVector beta, NumericVector R)
 {
 	//McConochie *et al*'s double Holland vortex model (based on Cardone *et
 	//al*, 1994).This application is the Coral Sea adaptation of the
@@ -308,14 +311,14 @@ NumericMatrix DoubleHollandWindProfilePi(NumericVector f, NumericVector vMax, Nu
 
 	int n = R.size();
   NumericMatrix VZ(n,2);
-	float Vi, Ri,fi,dPi,rMax1,vMaxi,cPi,betai;
+	float Vi, Ri,fi,dPi,rMax1,rMax2i,vMaxi,cPi,betai;
 	float E, d2Vm, aa, bb, cc;
 
 	float cubic = 0.0f; //cubic profile (cubic == 0.1f) to avoid the barotropic instability mentioned in Kepert 2001
 
 	float beta1, beta2;
 
-	float rMax2 = 150.0f;
+	//float rMax2 = 150.0f;
   //float rMax1 = rMax;
 	float gradientV1, gradientV2;
 
@@ -329,6 +332,7 @@ NumericMatrix DoubleHollandWindProfilePi(NumericVector f, NumericVector vMax, Nu
 	fi = f[i];
 	dPi = dP[i]*100.0f; //pa not hPa
 	rMax1 = rMax[i];
+	rMax2i = rMax2[i];
 	vMaxi = vMax[i];
 	cPi = cP[i]*100.0f;
 	betai = beta[i];
@@ -353,7 +357,7 @@ NumericMatrix DoubleHollandWindProfilePi(NumericVector f, NumericVector vMax, Nu
 
 	E = exp(1.0f);
 
-	nu = pow((rMax2 / rMax1), beta2);
+	nu = pow((rMax2i / rMax1), beta2);
   //missing powf on second line
 	d2Vm = (-1.0f / (8.0f * pow(4.0f * beta1 * dp1 / (rho * E) + (4.0f * beta2 * dp2 / rho) * nu * exp(-nu) + powf(rMax1 * fi, 2.0f), 1.5f))*
 		powf(-(4.0f * (beta1 *beta1) * dp1 / (rho * rMax1 * E)) + (4.0f * (beta1 * beta1) * dp1 / (rho * rMax1 * E)) - (4 * (beta2 *beta2) * dp2 / rho) *
@@ -381,7 +385,7 @@ NumericMatrix DoubleHollandWindProfilePi(NumericVector f, NumericVector vMax, Nu
 
 
 		mu = powf(rMax1 / Ri, beta1);
-		nu = powf(rMax2 / Ri, beta2);
+		nu = powf(rMax2i / Ri, beta2);
 		emu = exp(-mu);
 		enu = exp(-nu);
 
@@ -422,6 +426,7 @@ NumericMatrix DoubleHollandWindProfilePi(NumericVector f, NumericVector vMax, Nu
 //' @title Double Holland Pressure Profile Time Series
 //' @description Pressure profile time series at a grid point
 //' @param rMax radius of maximum winds in km
+//' @param rMax2 radius of outer radial winds in km
 //' @param dP pressure differential, environmental less TC central pressure in hPa
 //' @param cP TC central pressure in hPa
 //' @param beta exponential term for Holland vortex
@@ -429,23 +434,24 @@ NumericMatrix DoubleHollandWindProfilePi(NumericVector f, NumericVector vMax, Nu
 //' @return vector of pressures.
 //' //@example DoubleHollandPressureProfilePi(20,20,980,1.2,50)
 // [[Rcpp::export]]
-NumericVector DoubleHollandPressureProfilePi(NumericVector rMax, NumericVector dP, NumericVector cP,  NumericVector beta, NumericVector R)
+NumericVector DoubleHollandPressureProfilePi(NumericVector rMax, NumericVector rMax2, NumericVector dP, NumericVector cP,  NumericVector beta, NumericVector R)
 {
 	//Holland pressure profile
 	int n = R.size();
   NumericVector P(n);
 
-	float Ri,dPi,rMaxi,cPi;
+	float Ri,dPi,rMaxi,rMax2i,cPi;
 	float dp1,dp2;
 	float beta1, beta2;
 	float nu, mu, enu, emu;
 
-	float rMax2 = 150.0f;
+	//float rMax2 = 150.0f;
 
 
 	for(int i = 0;i < n; i++){
 	dPi = dP[i]*100;
 	rMaxi = rMax[i];
+	rMax2i = rMax2[i];
 	cPi = cP[i]*100;
 
 	if (dPi < 1500.0f)
@@ -468,7 +474,7 @@ NumericVector DoubleHollandPressureProfilePi(NumericVector rMax, NumericVector d
 		//
 		Ri = R[i];
 		mu = powf(rMaxi / Ri,beta1);
-		nu = powf(rMax2 / Ri,beta2);
+		nu = powf(rMax2i / Ri,beta2);
 		emu = exp(-mu);
 		enu = exp(-nu);
 		P[i] = (cPi + dp1*emu + dp2*enu)/100.0f;
@@ -962,6 +968,7 @@ NumericVector HollandPressureProfile(float rMax, float dP, float cP, float beta,
 //' @description Wind profile time series at a grid point. Holland et al. 2010.  In this version, the exponent is allowed to vary linearly outside the radius of maximum wind. I.e. rather than take the square root, the exponent varies around 0.5.Currently this version does not have a corresponding vorticity profile set up in wind Vorticity, so it cannot be applied in some wind field modelling.
 //' @param f single coriolis parameter at the centre of TC in hz
 //' @param rMax radius of maximum winds in km
+//' @param rMax2 radius of outer 17.5ms winds in km
 //' @param dP pressure differential, environmental less TC central pressure in hPa
 //' @param rho density of air in Kg/m3
 //' @param R vector of distances from grid points to TC centre in km
@@ -970,7 +977,7 @@ NumericVector HollandPressureProfile(float rMax, float dP, float cP, float beta,
 //' @return array with two columns for velocity and then vorticity.
 //' //@example NewHollandWindProfile(-1e-4,20,20,1.15,-14,50,1.3)
 // [[Rcpp::export]]
-NumericMatrix NewHollandWindProfile(float f, float rMax, float dP, float rho, NumericVector R, float vMax, float beta)
+NumericMatrix NewHollandWindProfile(float f, float rMax, float rMax2, float dP, float rho, NumericVector R, float vMax, float beta)
 {
   //Holland et al. 2010.  In this version, the exponent is allowed to
   //vary linearly outside the radius of maximum wind.i.e.rather than
@@ -986,7 +993,7 @@ NumericMatrix NewHollandWindProfile(float f, float rMax, float dP, float rho, Nu
   float sf;
   sf = (f / fabs(f));
   Bs = beta;
-  float rGale = 250.0; // Radius for gale force wind. This should be user defined
+  float rGale = rMax2; //250.0; // Radius for gale force wind. This should be user defined
   for(int i = 0;i < n; i++){
     //
     Ri = R[i];
@@ -1003,7 +1010,7 @@ NumericMatrix NewHollandWindProfile(float f, float rMax, float dP, float rho, Nu
     }
 
     delta = powf(rMax / Ri, Bs);
-    edelta = exp(-delta);
+    edelta = exp(1-delta);
 
     VZ(i,0) = sf * vMax*pow(delta * edelta, xx);
     VZ(i,1) = 0.0f;// Warning dummy value
@@ -1018,6 +1025,7 @@ NumericMatrix NewHollandWindProfile(float f, float rMax, float dP, float rho, Nu
 //' @param f single coriolis parameter at the centre of TC in hz
 //' @param vMax maximum wind velocity calculation in m/s
 //' @param rMax radius of maximum winds in km
+//' @param rMax2 radius of outer radial winds in km
 //' @param dP pressure differential, environmental less TC central pressure in hPa
 //' @param cP TC central pressure in hPa
 //' @param rho density of air in Kg/m3
@@ -1026,7 +1034,7 @@ NumericMatrix NewHollandWindProfile(float f, float rMax, float dP, float rho, Nu
 //' @return array with two columns for velocity and then vorticity.
 //' //@example DoubleHollandWindProfile(-1e-4,20,20,10,980,1.15,1.2,50)
 // [[Rcpp::export]]
-NumericMatrix DoubleHollandWindProfile(float f, float vMax, float rMax, float dP, float cP, float rho, float beta, NumericVector R)
+NumericMatrix DoubleHollandWindProfile(float f, float vMax, float rMax, float rMax2, float dP, float cP, float rho, float beta, NumericVector R)
 {
   //McConochie *et al*'s double Holland vortex model (based on Cardone *et
   //al*, 1994).This application is the Coral Sea adaptation of the
@@ -1042,7 +1050,7 @@ NumericMatrix DoubleHollandWindProfile(float f, float vMax, float rMax, float dP
 
   float beta1, beta2;
 
-  float rMax2 = 150.0f;
+  //float rMax2 = 150.0f;
   //float rMax1 = rMax;
   float gradientV1, gradientV2;
 
@@ -1147,6 +1155,7 @@ NumericMatrix DoubleHollandWindProfile(float f, float vMax, float rMax, float dP
 //' @title Double Holland Pressure Profile
 //' @description Pressure profile at grid points
 //' @param rMax radius of maximum winds in km
+//' @param rMax2 radius of outer radial winds in km
 //' @param dP pressure differential, environmental less TC central pressure in hPa
 //' @param cP TC central pressure in hPa
 //' @param beta exponential term for Holland vortex
@@ -1154,7 +1163,7 @@ NumericMatrix DoubleHollandWindProfile(float f, float vMax, float rMax, float dP
 //' @return vector of pressures.
 //' //@example DoubleHollandPressureProfile(20,20,980,1.2,50)
 // [[Rcpp::export]]
-NumericVector DoubleHollandPressureProfile(float rMax, float dP, float cP,  float beta, NumericVector R)
+NumericVector DoubleHollandPressureProfile(float rMax,float rMax2, float dP, float cP,  float beta, NumericVector R)
 {
   //Holland pressure Profile
   int n = R.size();
@@ -1165,7 +1174,7 @@ NumericVector DoubleHollandPressureProfile(float rMax, float dP, float cP,  floa
   float beta1, beta2;
   float nu, mu, enu, emu;
 
-  float rMax2 = 150.0f;
+  //float rMax2 = 150.0f;
   float rMax1 = rMax;
   dP = dP*100;
   cP = cP*100;

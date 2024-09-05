@@ -34,7 +34,7 @@ TCi = TC[46]
 ## -----------------------------------------------------------------------------
 paramsTable = read.csv(system.file("extdata/tuningParams/defult_params.csv",package = "TCHazaRds"))
 #paramsTable$value[6:7] = c(0,0)
-knitr::kable(paramsTable,caption = "Parameter file")
+paramsTable#knitr::kable(paramsTable,caption = "Parameter file")
 
 ## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------
 r = rast(xmin = 145,xmax=149,ymin = -19,ymax = -16.5,resolution=.01)
@@ -49,72 +49,5 @@ GEO_land = land_geometry(land_r,inland_proximity)
 
 #plot(inland_proximity,main = "Inland Distance (m)")
 #plot(TC,add=TRUE)
-
-
-## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------
-ats = seq(0, 65, length=14)
-HAZi = TCHazaRdsWindField(GEO_land = GEO_land,TC = TCi,paramsTable=paramsTable,returnWaves = TRUE)
-library(raster)       # convert for raster plots
-dummy = raster::raster() 
-TC_sp = list("sp.lines",as(TC,"Spatial"),col="black")
-sp::spplot(HAZi,"Sw",at=ats,sp.layout = TC_sp,main = "Surface wind speed [m/s]")
-ats = seq(0, 16, length=9)
-sp::spplot(HAZi,"Hs0",at=ats,sp.layout = TC_sp,main = "Deep water significant wave height [m]")
-
-
-## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------
-ats = seq(0, 65, length=14)
-if (.Platform$OS.type == "windows"){
-  UV = as(c(HAZi["Uw"],HAZi["Vw"]),"Raster") #need to convert back to raster
-  rasterVis::vectorplot(UV, isField='dXY', col.arrows='white', aspX=0.002,aspY=0.002,at=ats ,
-  colorkey=list(at=ats), par.settings=viridisTheme)+latticeExtra::layer(sp.lines(as(TC,"Spatial"),col="red"))
-}
-
-## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------
-HAZ = TCHazaRdsWindFields(GEO_land=GEO_land,TC=TC,paramsTable=paramsTable)
-sp::spplot(max(HAZ$Sw),at=ats,sp.layout = TC_sp)
-
-## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------
-outdate = seq(strptime(TC$ISO_TIME[1],"%Y-%m-%d %H:%M:%S",tz="UTC"),
-              strptime(rev(TC$ISO_TIME)[1],"%Y-%m-%d %H:%M:%S",tz="UTC"),
-              3600)
-HAZI = TCHazaRdsWindFields(outdate=outdate,GEO_land=GEO_land,TC=TC,paramsTable=paramsTable)
-sp::spplot(max(HAZI$Sw),at=ats,sp.layout = TC_sp)
-
-## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------
-
-outdate = seq(strptime(TC$ISO_TIME[1],"%Y-%m-%d %H:%M:%S",tz="UTC"),
-              strptime(rev(TC$ISO_TIME)[1],"%Y-%m-%d %H:%M:%S",tz="UTC"),
-              600)
-
-GEO_landp = data.frame(dem=0,lons = 147,lats=-18,f=-4e-4,inlandD = 0)
-HAZts = TCHazaRdsWindTimeSereies(GEO_land=GEO_landp,TC=TC,paramsTable = paramsTable)
-HAZtsi = TCHazaRdsWindTimeSereies(outdate = outdate,GEO_land=GEO_landp,TC=TC,paramsTable = paramsTable)
-
-main =  paste(TCi$NAME[1],TCi$SEASON[1],"at",GEO_landp$lons,GEO_landp$lats)
-if (.Platform$OS.type == "windows"){ 
-  suppressWarnings(with(HAZts,plot(date,Sw,format = "%b-%d %HZ",type="l",main = main,ylab = "Wind speed [m/s]")))
-  with(HAZtsi,lines(date,Sw,col=2))
-  legend("topleft",c("6 hrly","10 min interpolated"),col = c(1,2),lty=1)
-}
-
-## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------
-TCi$thetaFm = 90-returnBearing(TCi)
-pp <- TCProfilePts(TC_line = TCi,bear=TCi$thetaFm+90,length =150,step=1)
-#extract the GEO_land
-GEO_land_v = extract(GEO_land,pp,bind=TRUE,method = "bilinear")
-HAZp = TCHazaRdsWindProfile(GEO_land_v,TCi,paramsTable)
-
-HAZie = extract(HAZi,pp,bind=TRUE)#,method = "bilinear")
-
-wcol = colorRampPalette(c("white","lightblue","blue","violet","purple"))
-#see ?terra::plot
-plot(HAZi,"Sw",levels=ats,col = wcol(13),range = range(ats),type="continuous",all_levels=TRUE)
-#plot(HAZp,add=TRUE,cex=1.2)
-plot(HAZp,"Sw",levels=ats,col = wcol(13),range = range(ats),type="continuous",border="grey")#,all_levels=TRUE)
-lines(TC)
-
-## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------
-plot(HAZp$radialdist,HAZp$Sw,type="l",xlab = "Radial distance [km]",ylab = "Wind speed [m/s]");grid()
 
 

@@ -15,11 +15,13 @@ update_Track(
   rMaxModel,
   vMaxModel,
   betaModel,
+  rMax2Model,
   eP,
   rho = NULL,
   RMAX,
   VMAX,
-  B
+  B,
+  RMAX2
 )
 }
 \arguments{
@@ -43,6 +45,8 @@ update_Track(
 
 \item{betaModel}{empirical model for TC shape parameter beta (dimensionless Beta)}
 
+\item{rMax2Model}{empirical model for radius of outer 17.5ms wind calculation (rMax2 in km)}
+
 \item{eP}{background environmental pressure (hPa)}
 
 \item{rho}{air density}
@@ -52,6 +56,8 @@ update_Track(
 \item{VMAX}{If params rMaxModel value is NA, use input TC$VMAX}
 
 \item{B}{If params rMaxModel value is NA, use input TC$B}
+
+\item{RMAX2}{If params rMax2Model value is NA, use input TC$RMAX2}
 }
 \value{
 list of track data inclining the rMax vMax and Beta.
@@ -70,6 +76,7 @@ TCi$PRES <- TCi$BOM_PRES
 TCi$RMAX <- TCi$BOM_RMW/1.852 #convert from nautical miles to km
 TCi$VMAX <- TCi$BOM_WIND*1.94 #convert from knots to m/s
 TCi$B <- 1.4
+TCi$RMAX2 <- 150 
 t1 <- strptime("2011-02-01 09:00:00","\%Y-\%m-\%d \%H:\%M:\%S", tz = "UTC") #first date in POSIX format
 t2 <- strptime(rev(TCi$ISO_TIME)[1],"\%Y-\%m-\%d \%H:\%M:\%S", tz = "UTC") #last date in POSIX format
 outdate <- seq(t1,t2,"hour") #array sequence from t1 to t2 stepping by “hour”
@@ -79,16 +86,18 @@ TCil = update_Track(outdate = outdate,
                    TClons = TCi$LON,
                    TClats = TCi$LAT,
                    vFms=TCi$STORM_SPD,
-                  thetaFms=TCi$thetaFm,
+                   thetaFms=TCi$thetaFm,
                    cPs=TCi$PRES,
-                  rMaxModel=params$rMaxModel,
+                   rMaxModel=params$rMaxModel,
                    vMaxModel=params$vMaxModel,
                    betaModel=params$betaModel,
+                   rMax2Model = params$rMaxModel,
                    eP = params$eP,
                    rho = params$rhoa,
                    RMAX = TCi$RMAX,
                    VMAX = TCi$VMAX,
-                   B = TCi$B
+                   B = TCi$B,
+                   RMAX2 = TCi$RMAX2
                    )
 # 'observed' along tack parameters are calculated (#Model = NA)                   
 TCil = update_Track(outdate = outdate,
@@ -96,15 +105,17 @@ TCil = update_Track(outdate = outdate,
                    TClons = TCi$LON,
                    TClats = TCi$LAT,
                    vFms=TCi$STORM_SPD,
-                  thetaFms=TCi$thetaFm,
+                   thetaFms=TCi$thetaFm,
                    cPs=TCi$PRES,
-                  rMaxModel=NA,
+                   rMaxModel=NA,
                    vMaxModel=NA,
                    betaModel=NA,
+                   rMax2Model = NA,
                    eP = params$eP,
                    rho = params$rhoa,
                    RMAX = TCi$RMAX,
                    VMAX = TCi$VMAX,
-                   B = TCi$B
+                   B = TCi$B,
+                   RMAX2 = TCi$RMAX2
                    )
 }

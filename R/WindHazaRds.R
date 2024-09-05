@@ -99,11 +99,13 @@ land_geometry = function(dem,inland_proximity,returnpoints=FALSE){
 #' @param rMaxModel empirical model for radius of maximum wind calculation (rMax in km)
 #' @param vMaxModel empirical model for maximum wind velocity calculation (vMax in m/s)
 #' @param betaModel empirical model for TC shape parameter beta (dimensionless Beta)
+#' @param rMax2Model empirical model for radius of outer 17.5ms wind calculation (rMax2 in km)
 #' @param eP background environmental pressure (hPa)
 #' @param rho air density
 #' @param RMAX If params rMaxModel value is NA, use input TC$RMAX
 #' @param VMAX If params rMaxModel value is NA, use input TC$VMAX
 #' @param B If params rMaxModel value is NA, use input TC$B
+#' @param RMAX2 If params rMax2Model value is NA, use input TC$RMAX2
 #'
 #' @return list of track data inclining the rMax vMax and Beta.
 #' @export
@@ -119,6 +121,7 @@ land_geometry = function(dem,inland_proximity,returnpoints=FALSE){
 #' TCi$RMAX <- TCi$BOM_RMW/1.852 #convert from nautical miles to km
 #' TCi$VMAX <- TCi$BOM_WIND*1.94 #convert from knots to m/s
 #' TCi$B <- 1.4
+#' TCi$RMAX2 <- 150 
 #' t1 <- strptime("2011-02-01 09:00:00","%Y-%m-%d %H:%M:%S", tz = "UTC") #first date in POSIX format
 #' t2 <- strptime(rev(TCi$ISO_TIME)[1],"%Y-%m-%d %H:%M:%S", tz = "UTC") #last date in POSIX format
 #' outdate <- seq(t1,t2,"hour") #array sequence from t1 to t2 stepping by “hour”
@@ -128,16 +131,18 @@ land_geometry = function(dem,inland_proximity,returnpoints=FALSE){
 #'                    TClons = TCi$LON,
 #'                    TClats = TCi$LAT,
 #'                    vFms=TCi$STORM_SPD,
-#'                   thetaFms=TCi$thetaFm,
+#'                    thetaFms=TCi$thetaFm,
 #'                    cPs=TCi$PRES,
-#'                   rMaxModel=params$rMaxModel,
+#'                    rMaxModel=params$rMaxModel,
 #'                    vMaxModel=params$vMaxModel,
 #'                    betaModel=params$betaModel,
+#'                    rMax2Model = params$rMaxModel,
 #'                    eP = params$eP,
 #'                    rho = params$rhoa,
 #'                    RMAX = TCi$RMAX,
 #'                    VMAX = TCi$VMAX,
-#'                    B = TCi$B
+#'                    B = TCi$B,
+#'                    RMAX2 = TCi$RMAX2
 #'                    )
 #' # 'observed' along tack parameters are calculated (#Model = NA)                   
 #' TCil = update_Track(outdate = outdate,
@@ -145,25 +150,28 @@ land_geometry = function(dem,inland_proximity,returnpoints=FALSE){
 #'                    TClons = TCi$LON,
 #'                    TClats = TCi$LAT,
 #'                    vFms=TCi$STORM_SPD,
-#'                   thetaFms=TCi$thetaFm,
+#'                    thetaFms=TCi$thetaFm,
 #'                    cPs=TCi$PRES,
-#'                   rMaxModel=NA,
+#'                    rMaxModel=NA,
 #'                    vMaxModel=NA,
 #'                    betaModel=NA,
+#'                    rMax2Model = NA,
 #'                    eP = params$eP,
 #'                    rho = params$rhoa,
 #'                    RMAX = TCi$RMAX,
 #'                    VMAX = TCi$VMAX,
-#'                    B = TCi$B
+#'                    B = TCi$B,
+#'                    RMAX2 = TCi$RMAX2
 #'                    )
 update_Track <- function(outdate = NULL, indate, TClons, TClats, vFms, thetaFms, cPs,
-                         rMaxModel, vMaxModel, betaModel, eP, rho = NULL,RMAX,VMAX,B) {
+                         rMaxModel, vMaxModel, betaModel,rMax2Model, eP, rho = NULL,RMAX,VMAX,B,RMAX2) {
   TRACK <- list()
   TRACK$eP <- eP
   TRACK$rho <- rho
   if(is.na(rMaxModel) & is.null(RMAX)) stop("If params rMaxModel value is NA, please provide TC$RMAX")
   if(is.na(vMaxModel) & is.null(VMAX)) stop("If params vMaxModel value is NA, please provide TC$VMAX")
   if(is.na(betaModel) & is.null(B)) stop("If params betaModel value is NA, please provide TC$B")
+  if(is.na(rMax2Model) & is.null(RMAX2)) stop("If params rmax2Model value is NA, please provide TC$RMAX2")
   
 
   odatei <- as.numeric(indate)
@@ -209,11 +217,12 @@ update_Track <- function(outdate = NULL, indate, TClons, TClats, vFms, thetaFms,
     if(!is.na(rMaxModel)) if(rMaxModel <= 4) TRACK$rMax <- rMax_modelsR(rMaxModel = rMaxModel, TClats = TRACK$TClats, cPs = TRACK$cPs, eP = eP,
                                dPdt = TRACK$dPdt, vFms = TRACK$vFms, rho = rho)
     if(is.na(rMaxModel)) {
-      if (is.null(outdate[1])) TRACK$rMax <- RMAX
+      if (is.null(outdate[1])) TRACK$rMax <- RMAX[s]
       if (!is.null(outdate[1])) TRACK$rMax <- stats::approx(indatei, RMAX, outdatei)$y[s]
     }
   }
 
+  
   # Compute the Coriolis parameter
   TClatrad <- TRACK$TClats * pi / 180.0
   wearth <- pi * (1.0 / 24.0) / 1800.0
@@ -227,7 +236,7 @@ update_Track <- function(outdate = NULL, indate, TClons, TClats, vFms, thetaFms,
     if(!is.na(vMaxModel)) if(vMaxModel <= 4) TRACK$vMax <- vMax_modelsR(vMaxModel = vMaxModel, cPs = TRACK$cPs, eP = eP, vFms = TRACK$vFms,
                                TClats = TRACK$TClats, dPdt = TRACK$dPdt, beta = 1.3, rho = rho) # Holland 80 beta = 1.3
     if(is.na(vMaxModel)) {
-      if(is.null(outdate[1])) TRACK$vMax <- VMAX
+      if(is.null(outdate[1])) TRACK$vMax <- VMAX[s]
       if(!is.null(outdate[1])) TRACK$vMax <- stats::approx(indatei, VMAX, outdatei)$y[s]
     }
   }
@@ -240,8 +249,20 @@ update_Track <- function(outdate = NULL, indate, TClons, TClats, vFms, thetaFms,
     if(!is.na(betaModel)) if(betaModel <= 4) TRACK$beta <- beta_modelsR(betaModel = betaModel, vMax = TRACK$vMax, rMax = TRACK$rMax, cPs = TRACK$cPs,
                              eP = TRACK$eP, vFms = TRACK$vFms, TClats = TRACK$TClats, dPdt = TRACK$dPdt)
     if(is.na(betaModel)) {
-      if(is.null(outdate[1]))TRACK$beta <- B
+      if(is.null(outdate[1]))TRACK$beta <- B[s]
       if(!is.null(outdate[1])) TRACK$beta <- stats::approx(indatei, B, outdatei)$y[s]
+    }
+  }
+  
+  # Radius of outer 17.5m/s winds model selection
+  if (length(rMax2Model) > 1) {
+    TRACK$rMax2 <- rMax2Model # use the input values
+  }
+  if (length(rMax2Model) == 1) {
+    if(!is.na(rMax2Model)) if(rMax2Model <= 2) TRACK$rMax2 <- rMax2_modelsR(rMax2Model = rMax2Model, vMax = TRACK$vMax, rMax = TRACK$rMax, TClats = TRACK$TClats)
+    if(is.na(rMax2Model)) {
+      if (is.null(outdate[1])) TRACK$rMax2 <- RMAX2[s]
+      if (!is.null(outdate[1])) TRACK$rMax2 <- stats::approx(indatei, RMAX2, outdatei)$y[s]
     }
   }
   return(TRACK)
@@ -281,8 +302,8 @@ TCvectInterp = function(outdate = NULL, TC, paramsTable) {
   TRACK <- update_Track(outdate = outdate, indate = indate, TClons = TC$LON, TClats = TC$LAT,
                         vFms = TC$STORM_SPD, thetaFms = TC$thetaFm, cPs = TC$PRES,
                         rMaxModel = params$rMaxModel, vMaxModel = params$vMaxModel,
-                        betaModel = params$betaModel, eP = params$eP, rho = params$rhoa,
-                        RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B
+                        betaModel = params$betaModel, rMax2Model = params$rMaxModel, eP = params$eP, rho = params$rhoa,
+                        RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B, RMAX2 = TC$RMAX2
                         )
 
   # Create a spatial vector from the interpolated track data
@@ -292,6 +313,7 @@ TCvectInterp = function(outdate = NULL, TC, paramsTable) {
   v$rMax <- TRACK$rMax
   v$vMax <- TRACK$vMax
   v$beta <- TRACK$beta
+  v$rMax2 <- TRACK$rMax2
   v$dPdt <- TRACK$dPdt
   v$cP <- TRACK$cPs
   v$TClat <- TRACK$TClats
@@ -360,8 +382,8 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
   TRACK <- update_Track(outdate = outdate, indate = indate, TClons = TC$LON, TClats = TC$LAT,
                         vFms = TC$STORM_SPD, thetaFms = TC$thetaFm, cPs = TC$PRES,
                         rMaxModel = params$rMaxModel, vMaxModel = params$vMaxModel,
-                        betaModel = params$betaModel, eP = params$eP, rho = params$rhoa,
-                        RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B)
+                        betaModel = params$betaModel, rMax2Model = params$rMax2Model, eP = params$eP, rho = params$rhoa,
+                        RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B,RMAX2 = TC$RMAX2)
 
   # Extract geographical land information
   lon <- GEO_land$lons
@@ -375,16 +397,16 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
   if (params$pressureProfileModel == 0)
     P <- with(TRACK, HollandPressureProfilePi(rMax = rMax, dP = dPs, cP = cPs, beta = beta, R = R))
   if (params$pressureProfileModel == 2)
-    P <- with(TRACK, DoubleHollandPressureProfilePi(rMax = rMax, dP = dPs, cP = cPs, beta = beta, R = R))
+    P <- with(TRACK, DoubleHollandPressureProfilePi(rMax = rMax,rMax2 = rMax2, dP = dPs, cP = cPs, beta = beta, R = R))
 
   # Calculate wind speed and direction based on wind profile model
   fs <- rep(GEO_land$f, length(R))
   if (params$windProfileModel == 0)
     VZ <- with(TRACK, HollandWindProfilePi(f = fs, vMax = vMax, rMax = rMax, dP = dPs, rho = rho, beta = beta, R = R))
   if (params$windProfileModel == 1)
-    VZ <- with(TRACK, NewHollandWindProfilePi(f = fs, vMax = vMax, rMax = rMax, dP = dPs, rho = rho, beta = beta, R = R))
+    VZ <- with(TRACK, NewHollandWindProfilePi(f = fs, vMax = vMax, rMax = rMax, rMax2 = rMax2, dP = dPs, rho = rho, beta = beta, R = R))
   if (params$windProfileModel == 2)
-    VZ <- with(TRACK, DoubleHollandWindProfilePi(f = fs, vMax = vMax, rMax = rMax, dP = dPs, rho = rho, beta = beta, R = R, cP = cPs))
+    VZ <- with(TRACK, DoubleHollandWindProfilePi(f = fs, vMax = vMax, rMax = rMax, rMax2 = rMax2, dP = dPs, rho = rho, beta = beta, R = R, cP = cPs))
   if (params$windProfileModel == 4)
     VZ <- with(TRACK, JelesnianskiWindProfilePi(f = fs, vMax = vMax, rMax = rMax, R = R))
 
@@ -462,6 +484,7 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
   v$rMax <- TRACK$rMax
   v$vMax <- TRACK$vMax
   v$beta <- TRACK$beta
+  v$rMax2 <- TRACK$rMax2
   v$dPdt <- TRACK$dPdt
   v$cP <- TRACK$cPs
   v$TClat <- TRACK$TClats
@@ -546,8 +569,8 @@ TCHazaRdsWindField <- function(GEO_land, TC, paramsTable,returnWaves = FALSE) {
     indate <- strptime(TC$ISO_TIME, "%Y-%m-%d %H:%M:%S", tz = "UTC")
     # Reformat track data
     TRACK <- update_Track(outdate = NULL, indate = indate, TClons = TC$LON, TClats = TC$LAT, vFms = TC$STORM_SPD, thetaFms = TC$thetaFm,
-                          cPs = TC$PRES, rMaxModel = params$rMaxModel, vMaxModel = params$vMaxModel, betaModel = params$betaModel,
-                          eP = params$eP, rho = params$rhoa,RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B)
+                          cPs = TC$PRES, rMaxModel = params$rMaxModel, vMaxModel = params$vMaxModel, betaModel = params$betaModel, rMax2Model = params$rMax2Model, 
+                          eP = params$eP, rho = params$rhoa,RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B, RMAX2 = TC$RMAX2)
   } else if (methods::is(TC, "data.frame")) {
     TRACK <- TC
     indate <- strptime("1970-01-01 00:00:00", "%Y-%m-%d %H:%M:%S", tz = "UTC") + TRACK$odatei
@@ -567,7 +590,7 @@ TCHazaRdsWindField <- function(GEO_land, TC, paramsTable,returnWaves = FALSE) {
   if (params$pressureProfileModel == 0) {
     P <- with(TRACK, HollandPressureProfile(rMax = rMax, dP = dPs, cP = cPs, beta = beta, R = R))
   } else if (params$pressureProfileModel == 2) {
-    P <- with(TRACK, DoubleHollandPressureProfile(rMax = rMax, dP = dPs, cP = cPs, beta = beta, R = R))
+    P <- with(TRACK, DoubleHollandPressureProfile(rMax = rMax, rMax2 = rMax2, dP = dPs, cP = cPs, beta = beta, R = R))
   }
 
   # Calculate wind profile based on the selected model
@@ -575,9 +598,9 @@ TCHazaRdsWindField <- function(GEO_land, TC, paramsTable,returnWaves = FALSE) {
   if (params$windProfileModel == 0) {
     VZ <- with(TRACK, HollandWindProfile(f = f, vMax = vMax, rMax = rMax, dP = dPs, rho = rho, beta = beta, R = R))
   } else if (params$windProfileModel == 1) {
-    VZ <- with(TRACK, NewHollandWindProfile(f = f, vMax = vMax, rMax = rMax, dP = dPs, rho = rho, beta = beta, R = R))
+    VZ <- with(TRACK, NewHollandWindProfile(f = f, vMax = vMax, rMax = rMax, rMax2 = rMax2, dP = dPs, rho = rho, beta = beta, R = R))
   } else if (params$windProfileModel == 2) {
-    VZ <- with(TRACK, DoubleHollandWindProfile(f = f, vMax = vMax, rMax = rMax, dP = dPs, rho = rho, beta = beta, R = R, cP = cPs))
+    VZ <- with(TRACK, DoubleHollandWindProfile(f = f, vMax = vMax, rMax = rMax, rMax2 = rMax2, dP = dPs, rho = rho, beta = beta, R = R, cP = cPs))
   } else if (params$windProfileModel == 4) {
     VZ <- with(TRACK, JelesnianskiWindProfile(f = f, vMax = vMax, rMax = rMax, R = R))
   }
@@ -786,9 +809,9 @@ TCHazaRdsWindFields <- function(outdate = NULL, GEO_land, TC, paramsTable, outfi
   # Reformat and interpolate track if outdate is provided
   TRACK <- as.data.frame(update_Track(outdate = outdate, indate = indate, TClons = TC$LON, TClats = TC$LAT,
                                       vFms = TC$STORM_SPD, thetaFms = TC$thetaFm, cPs = TC$PRES,
-                                      rMaxModel = params$rMaxModel, vMaxModel = params$vMaxModel,
+                                      rMaxModel = params$rMaxModel, vMaxModel = params$vMaxModel,rMax2Model = params$rMax2Model, 
                                       betaModel = params$betaModel, eP = params$eP, rho = params$rhoa,
-                                      RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B))
+                                      RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B,RMAX2 = TC$RMAX2))
 
   nt <- nrow(TRACK)
   TRACK$PRES <- TRACK$cPs
@@ -912,24 +935,29 @@ rMax_modelsR <- function(rMaxModel, TClats, cPs, eP, R175ms = 150, dPdt = NULL, 
     # Takagi Wu 2016 Figure 3
     rMaxs <- 0.676 * cPs - 578
   } else if (rMaxModel == 5) {
-    x <- 0.6 * (1 - dP / 215)
-    bs <- -4.4e-5 * dP^2 + 0.01 * dP + 0.03 * dPdt - 0.014 * abs(TClats) + 0.15 * vFms^x + 1
-    vMax <- 0.6252 * sqrt(dP * 100)
-    f <- 2 * 7.292e-5 * sin(abs(TClats * pi / 180))
-    ruser_m_vec <- R175ms * 1000
-    Muser_vec <- ruser_m_vec * 17.491 + 0.5 * abs(f) * ruser_m_vec^2
-    halffcorruser_m_vec <- 0.5 * f * ruser_m_vec
-    coefs.b <- 0.699
-    coefs.c <- -0.00618
-    coefs.f <- -0.00210
-    MmaxMuser_predict <- coefs.b * exp(coefs.c * (vMax - 17.491) + coefs.f * (vMax - 17.491) * halffcorruser_m_vec)
-    Mmax_predict <- MmaxMuser_predict * Muser_vec
-    rmax_predict <- (vMax / f) * (sqrt(1 + (2 * f * Mmax_predict / (vMax^2))) - 1)
-    rMaxs <- rmax_predict / 1000
+    rMaxs <- predict_rmax(R175ms, vMax, TClats)
+    #x <- 0.6 * (1 - dP / 215)
+    #bs <- -4.4e-5 * dP^2 + 0.01 * dP + 0.03 * dPdt - 0.014 * abs(TClats) + 0.15 * vFms^x + 1
+    #vMax <- 0.6252 * sqrt(dP * 100)
+    #f <- 2 * 7.292e-5 * sin(abs(TClats * pi / 180))
+    #ruser_m_vec <- R175ms * 1000
+    #Muser_vec <- ruser_m_vec * 17.491 + 0.5 * abs(f) * ruser_m_vec^2
+    #halffcorruser_m_vec <- 0.5 * f * ruser_m_vec
+    #coefs.b <- 0.699
+    #coefs.c <- -0.00618
+    #coefs.f <- -0.00210
+    #MmaxMuser_predict <- coefs.b * exp(coefs.c * (vMax - 17.491) + coefs.f * (vMax - 17.491) * halffcorruser_m_vec)
+    #Mmax_predict <- MmaxMuser_predict * Muser_vec
+    #rmax_predict <- (vMax / f) * (sqrt(1 + (2 * f * Mmax_predict / (vMax^2))) - 1)
+    #rMaxs <- rmax_predict / 1000
   }
 
   return(rMaxs)
 }
+
+
+
+
 
 #' Compute the Tropical Cyclone Maximum Wind Speeds
 #'
@@ -1089,6 +1117,7 @@ inlandWindDecay = function(d,a = c(0.66,1,0.4)){
 #' TCi$PRES <- 950
 #' TCi$RMAX <- 40
 #' TCi$B <- 1.4
+#' TCi$RMAX2 <- 90
 #' TCi$ISO_TIME <- "2022-10-04 20:00:00"
 #' TCi$LON <- geom(TCi)[1,3]
 #' TCi$LAT <- geom(TCi)[1,4]
@@ -1186,8 +1215,8 @@ TCHazaRdsWindProfile = function(GEO_land,TC,paramsTable){
     indate=strptime(TC$ISO_TIME,"%Y-%m-%d %H:%M:%S",tz = "UTC")
     #reformat
     TRACK = update_Track(outdate=NULL,indate=indate,TClons=TC$LON,TClats=TC$LAT,vFms=TC$STORM_SPD,thetaFms=TC$thetaFm,cPs=TC$PRES,
-                         rMaxModel=params$rMaxModel,vMaxModel=params$vMaxModel,betaModel=params$betaModel,eP = params$eP,rho = params$rhoa,
-                         RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B)
+                         rMaxModel=params$rMaxModel,vMaxModel=params$vMaxModel,betaModel=params$betaModel,rMax2Model=params$rMax2Model,eP = params$eP,rho = params$rhoa,
+                         RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B, RMAX2 = TC$RMAX2)
   }
   if(methods::is(TC,"data.frame")){
     TRACK = TC
@@ -1204,17 +1233,17 @@ TCHazaRdsWindProfile = function(GEO_land,TC,paramsTable){
   #0: Holland (1980)
   #2: McConochie et al. (2004) "Double-Holland"
   if(params$pressureProfileModel == 0) P <- with(TRACK,HollandPressureProfile(rMax=rMax,dP = dPs, cP=cPs,beta=beta,R=R))
-  if(params$pressureProfileModel == 2) P <- with(TRACK,DoubleHollandPressureProfile(rMax=rMax,dP=dPs,cP=cPs,beta=beta,R=R))
+  if(params$pressureProfileModel == 2) P <- with(TRACK,DoubleHollandPressureProfile(rMax=rMax, rMax2 = rMax2,dP=dPs,cP=cPs,beta=beta,R=R))
 
   #windProfileModel #https://geoscienceaustralia.github.io/tcrm/docs/setup.html?highlight=jelesnianski#windProfileinterface
   #0: Holland (1980)
   #2: McConochie et al. (2004) "Double-Holland"
   #4: Jelesnianski (1966)
   fs=GEO_land$f
-  if(params$windProfileModel == 0) VZ <- with(TRACK,HollandWindProfile(      f=f, vMax=vMax, rMax=rMax, dP=dPs, rho=rho, beta=beta, R=R))
-  if(params$windProfileModel == 1) VZ <- with(TRACK,NewHollandWindProfile(   f=f, vMax=vMax, rMax=rMax, dP=dPs, rho=rho, beta=beta, R=R))
-  if(params$windProfileModel == 2) VZ <- with(TRACK,DoubleHollandWindProfile(f=f, vMax=vMax, rMax=rMax, dP=dPs, rho=rho, beta=beta, R=R, cP=cPs))
-  if(params$windProfileModel == 4) VZ <- with(TRACK,JelesnianskiWindProfile( f=f, vMax=vMax, rMax=rMax,                             R=R))
+  if(params$windProfileModel == 0) VZ <- with(TRACK,HollandWindProfile(      f=f, vMax=vMax, rMax=rMax,                dP=dPs, rho=rho, beta=beta, R=R))
+  if(params$windProfileModel == 1) VZ <- with(TRACK,NewHollandWindProfile(   f=f, vMax=vMax, rMax=rMax, rMax2 = rMax2, dP=dPs, rho=rho, beta=beta, R=R))
+  if(params$windProfileModel == 2) VZ <- with(TRACK,DoubleHollandWindProfile(f=f, vMax=vMax, rMax=rMax, rMax2 = rMax2, dP=dPs, rho=rho, beta=beta, R=R, cP=cPs))
+  if(params$windProfileModel == 4) VZ <- with(TRACK,JelesnianskiWindProfile( f=f, vMax=vMax, rMax=rMax,                                            R=R))
 
   V=VZ[,1]
   #0 Kepert & Wang (2001)
@@ -1251,5 +1280,154 @@ TCHazaRdsWindProfile = function(GEO_land,TC,paramsTable){
   return(GEO_land)
 }
 
+#' rMax175ms_solver
+#'
+#' A helper function for numerically solving the radius of 17.5 m/s winds using the
+#' Chavas and Knaff (2022) model. This function is called by `uniroot` to compute
+#' the difference between the guessed and actual rmax values.
+#'
+#' @param rMax175ms_m Numeric. Guessed radius of 17.5 m/s winds in meters.
+#' @param vMax Numeric. Maximum wind speed (m/s).
+#' @param rmax_predict_m Numeric. Target radius of maximum winds in meters.
+#' @param TClats Numeric. Latitude of the tropical cyclone in degrees.
+#'
+#' @return The difference between the guessed rmax and the target rmax.
+#' @examples
+#' rMax175ms_solver(100000, 50, 36000, 20)
+#' @export
+rMax175ms_solver <- function(rMax175ms_m, vMax, rmax_predict_m, TClats) {
+  TClats = abs(TClats)
+  ms_kt <- 0.5144444  # 1 kt = 0.514444 m/s
+  Vuser <- 34 * ms_kt  # [m/s]; used to fit E04 model to estimate r0'
+  omeg <- 7.292e-5  # [s^-1]
+  
+  # Calculate fcor
+  fcor <- 2 * omeg * sin(abs(TClats) * pi / 180)
+  
+  # Coefficient estimates from CK22 (Eq 7 / Table 2 of CK22)
+  coefs <- list(b = 0.699, c = -0.00618, f = -0.00210)
+  
+  # Calculate Muser (Eq 2 of CK22)
+  Muser <- rMax175ms_m * Vuser + 0.5 * abs(fcor) * rMax175ms_m^2
+  
+  # Estimate Mmax/Muser (Eq 6 of CK22)
+  halffcorrMax175ms_m <- 0.5 * fcor * rMax175ms_m
+  MmaxMuser_predict <- coefs$b * exp(
+    coefs$c * (vMax - Vuser) + coefs$f * (vMax - Vuser) * halffcorrMax175ms_m
+  )
+  
+  # Solve for Mmax (Eq 3 of CK22)
+  Mmax_predict <- MmaxMuser_predict * Muser
+  
+  # Calculate the predicted rmax based on the guessed rMax175ms
+  rmax_guess <- (vMax / fcor) * (sqrt(1 + (2 * fcor * Mmax_predict / (vMax^2))) - 1)
+  
+  # Return the difference between the guessed rmax and the target rmax
+  return(rmax_guess - rmax_predict_m)
+}
+
+
+#' rMax2_modelsR
+#'
+#' Numerically solves for the radius of 17.5 m/s winds (rMax175ms) using the 
+#' Chavas and Knaff (2022) model and `uniroot`.
+#'
+#' @param rMax2Model TC outer radius of 17.5m/s winds model ('150km'=1,'CK22'=2)
+#' @param rMax Numeric. A vector of radius of maximum winds (km).
+#' @param vMax Numeric. A vector of maximum wind speeds (m/s).
+#' @param TClats Numeric. A vector of latitudes of tropical cyclone cwntre in degrees.
+#'
+#' @return A vector of predicted rMax175ms values (in km).
+#' @examples
+#' rMax <- c(30, 36, 40)
+#' vMax <- c(50, 55, 60)
+#' TClats <- c(20, 25, 30)
+#' rMax2_modelsR(2,rMax, vMax, TClats)
+#' @export
+rMax2_modelsR <- function(rMax2Model, rMax, vMax, TClats) {
+  # 1: O'Grady et al 2024 constant 150km
+  # 2: Chavas and Knaff (2022)
+  TClats = abs(TClats)
+  rMax175ms_list = NA
+  if(rMax2Model == 1) rMax175ms_list = rep(150,length(TClats))
+  if(rMax2Model == 2){
+    
+    if(length(vMax) == 1) vMax = rep(vMax,length(rMax))
+    if(length(TClats) == 1) vMax = rep(TClats,length(rMax))
+    rMax175ms_list <- numeric(length(rMax))
+    
+    for (i in seq_along(rMax)) {
+      # Convert rmax_km to meters
+      rmax_m <- rMax[i] * 1000
+      
+      # Adjust the interval based on expected outer radius range (e.g., 50 km to 400 km)
+      rMax175ms_solution <- tryCatch({
+        uniroot(rMax175ms_solver, interval = c(5000, 400000), vMax = vMax[i], rmax_predict_m = rmax_m, TClats = TClats[i])$root
+      }, error = function(e) {
+        message(paste0("Failed to find solution for rmax = ", round(rMax[i],2), "km for vMax = ",round(vMax[i],2)," m/s, try another vMax"))
+        NA  # Return NA if no solution found
+      })
+      
+      # Convert rMax175ms back to km and store the result
+      rMax175ms_list[i] <- rMax175ms_solution / 1000
+    }
+  }
+  return(rMax175ms_list)
+}
+
+
+#' predict_rmax
+#'
+#' Predicts the radius of maximum winds (rmax) based on the radius of 17.5 m/s winds
+#' (rMax175ms) using the Chavas and Knaff (2022) model.
+#'
+#' @param rMax175ms Numeric. A vector of radius of 17.5 m/s winds (in km).
+#' @param vMax Numeric. A vector of maximum wind speeds (m/s).
+#' @param TClats Numeric. A vector of latitudes of tropical cyclones (in degrees).
+#'
+#' @return A vector of predicted rmax values (in km).
+#' @examples
+#' rMax175ms <- c(100, 120, 140)
+#' vMax <- c(50, 55, 60)
+#' TClats <- c(20, 25, 30)
+#' predict_rmax(rMax175ms, vMax, TClats)
+#' @export
+predict_rmax <- function(rMax175ms, vMax, TClats) {
+  TClats = abs(TClats)
+  # Constants
+  ms_kt <- 0.5144444  # 1 kt = 0.514444 m/s
+  Vuser <- 34 * ms_kt  # [m/s]; used to fit E04 model to estimate r0'
+  omeg <- 7.292e-5  # [s^-1]
+  
+  # Convert rMax175ms to meters
+  rMax175ms_m <- rMax175ms * 1000
+  
+  # Calculate fcor
+  fcor <- 2 * omeg * sin(abs(TClats) * pi / 180)
+  
+  # Calculate Muser (Eq 2 of CK22)
+  Muser <- rMax175ms_m * Vuser + 0.5 * abs(fcor) * rMax175ms_m^2
+  
+  # Define f*rMax175ms
+  halffcorrMax175ms_m <- 0.5 * fcor * rMax175ms_m
+  
+  # Coefficient estimates from CK22 (Eq 7 / Table 2 of CK22)
+  coefs <- list(b = 0.699, c = -0.00618, f = -0.00210)
+  
+  # Estimate Mmax/Muser (Eq 6 of CK22)
+  MmaxMuser_predict <- coefs$b * exp(coefs$c * (vMax - Vuser) +
+                                       coefs$f * (vMax - Vuser) * halffcorrMax175ms_m)
+  
+  # Solve for predicted rmax (Eq 3 of CK22)
+  Mmax_predict <- MmaxMuser_predict * Muser
+  
+  # (Eq 4 of CK22)
+  rmax_predict <- (vMax / fcor) * (sqrt(1 + (2 * fcor * Mmax_predict / (vMax^2))) - 1)
+  
+  # Convert rmax to km
+  rMax <- rmax_predict / 1000
+  
+  return(rMax)
+}
 
 

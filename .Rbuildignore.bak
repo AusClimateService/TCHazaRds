@@ -1,0 +1,13 @@
+^.*\.Rproj$
+^\.Rproj\.user$
+^LICENSE$
+^cran-comments.md$
+^NEWS.md$
+^\.git$
+^OGradyEtAl2023windData.zip$
+^TCHazaRd_logo.png$
+^doc$
+^Meta$
+^CRAN-SUBMISSION$
+^\\.github$
+^\.github$
