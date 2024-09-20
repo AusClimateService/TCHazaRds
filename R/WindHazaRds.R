@@ -118,7 +118,7 @@ land_geometry = function(dem,inland_proximity,returnpoints=FALSE){
 #' require(terra)
 #' TCi <- vect(system.file("extdata/YASI/YASI.shp", package="TCHazaRds"))
 #' TCi$PRES <- TCi$BOM_PRES
-#' TCi$RMAX <- TCi$BOM_RMW/1.852 #convert from nautical miles to km
+#' TCi$RMAX <- TCi$BOM_RMW*1.852 #convert from nautical miles to km
 #' TCi$VMAX <- TCi$BOM_WIND*1.94 #convert from knots to m/s
 #' TCi$B <- 1.4
 #' TCi$RMAX2 <- 150 
@@ -291,6 +291,23 @@ update_Track <- function(outdate = NULL, indate, TClons, TClats, vFms, thetaFms,
 #'
 TCvectInterp = function(outdate = NULL, TC, paramsTable) {
   # Extract and organize the parameters from the paramsTable
+  gt = terra::geomtype(TC)
+  if(gt == "points") TC = TCpoints2lines(TC) #convert TC points to lines
+  
+  if(is.null(TC$LAT[1])){
+    gg = terra::geom(TC)
+    gg = gg[seq(1,2*length(TC),2),]
+    TC$LON = gg[,3]
+    TC$LAT = gg[,4]
+  }
+  if(is.null(TC$STORM_SPD[1])) {
+    TC$STORM_SPD = terra::perim(TC)/(1*3600) #m/s
+    warning("time step of track is assumed 1hr, please specify TC$STORM_SPD")
+  }
+  if(is.null(TC$thetaFm[1])) {
+    TC$thetaFm = 90-returnBearing(TC)
+  }
+  
   params <- array(paramsTable$value, dim = c(1, length(paramsTable$value)))
   colnames(params) <- paramsTable$param
   params <- data.frame(params)
@@ -305,7 +322,7 @@ TCvectInterp = function(outdate = NULL, TC, paramsTable) {
                         betaModel = params$betaModel, rMax2Model = params$rMaxModel, eP = params$eP, rho = params$rhoa,
                         RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B, RMAX2 = TC$RMAX2
                         )
-
+   
   # Create a spatial vector from the interpolated track data
   v <- terra::vect(cbind(TRACK$TClons, TRACK$TClats))
   v$NAME <- TC$NAME
@@ -318,8 +335,19 @@ TCvectInterp = function(outdate = NULL, TC, paramsTable) {
   v$cP <- TRACK$cPs
   v$TClat <- TRACK$TClats
   v$vFm <- TRACK$vFm
-
-  return(v)
+  
+  
+  v$LON <- TRACK$TClons
+  v$LAT <- TRACK$TClats
+  v$PRES = TRACK$cPs
+  v$TClats = TRACK$TClats
+  v$STORM_SPD = v$vFm 
+  v$ISO_TIME = v$date
+  v$thetaFm <- TRACK$thetaFms
+  
+  v_l = TCpoints2lines(v) #return lines rather than points
+  
+  return(v_l)
 }
 
 
@@ -1430,4 +1458,48 @@ predict_rmax <- function(rMax175ms, vMax, TClats) {
   return(rMax)
 }
 
-
+#' Convert Points to Line Segments
+#'
+#' This function converts a set of point geometries into line segments.
+#' The input vector must be a set of points, and the function will draw line segments between consecutive points.
+#' An additional point is extrapolated from the last two points to ensure the final segment is complete.
+#'
+#' @param pts_v A `SpatVector` of points (from the `terra` package).
+#'
+#' @return A `SpatVector` containing line geometries created from the input points.
+#'
+#' @import terra
+#' @examples
+#' library(terra)
+#' # Create example points
+#' pts <- vect(matrix(c(1, 1, 2, 2, 3, 3), ncol=2), type="points")
+#' # Convert points to line segments
+#' TClines <- TCpoints2lines(pts)
+#' 
+#' @export
+TCpoints2lines <- function(pts_v) {
+  out_v <- terra::vect()
+  
+  # Check if the geometry type is points
+  gt <- terra::geomtype(pts_v)
+  if (!(gt == "points")) stop(paste0("geomtype = ", gt))
+  
+  if (gt == "points") {
+    # Extract coordinates
+    coords <- terra::geom(pts_v)[, 3:4]
+    n <- dim(coords)[1]
+    
+    # Add an extra point to extend the last segment
+    coords <- rbind(coords, 2 * coords[n, ] - coords[n - 1, ])
+    
+    # Loop through the points to create line segments
+    for (i in 1:(nrow(coords) - 1)) {
+      segment_coords <- coords[i:(i + 1), ]
+      segment <- terra::vect(segment_coords, type = "lines")
+      out_v <- rbind(out_v, segment)
+    }
+  }
+  terra::values(out_v) = terra::values(pts_v)
+  terra::crs(out_v) = terra::crs(pts_v)
+  return(out_v)  # Return the created line segments
+}

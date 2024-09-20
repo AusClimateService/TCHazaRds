@@ -73,7 +73,7 @@ params <- data.frame(params)
 require(terra)
 TCi <- vect(system.file("extdata/YASI/YASI.shp", package="TCHazaRds"))
 TCi$PRES <- TCi$BOM_PRES
-TCi$RMAX <- TCi$BOM_RMW/1.852 #convert from nautical miles to km
+TCi$RMAX <- TCi$BOM_RMW*1.852 #convert from nautical miles to km
 TCi$VMAX <- TCi$BOM_WIND*1.94 #convert from knots to m/s
 TCi$B <- 1.4
 TCi$RMAX2 <- 150 
