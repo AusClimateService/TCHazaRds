@@ -845,7 +845,7 @@ TCHazaRdsWindFields <- function(outdate = NULL, GEO_land, TC, paramsTable, outfi
   TRACK$PRES <- TRACK$cPs
   TRACK$STORM_SPD <- TRACK$vFms
   TRACK$LON <- TRACK$TClons
-  TRACK$LAT <- TRACK$TClons
+  TRACK$LAT <- TRACK$TClats
   TRACK$thetaFm <- TRACK$thetaFms
 
   # Compute wind fields for each time step
