@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-R's compatibility to easily use fast Cpp code ([Rcpp](https://github.com/RcppCore/Rcpp)) and spatial processing (e.g. [terra](https://github.com/rspatial/terra)) makes it an attractive opensource environment to study [tropical cyclones](https://en.wikipedia.org/wiki/Tropical_cyclone), aka TCs, hurricanes and typhoons. This package estimates TC vortex wind and pressure fields using parametric equations originally coded up in python by [TCRM](https://github.com/GeoscienceAustralia/tcrm) and in Cuda Cpp by [TCwindgen](https://github.com/CyprienBosserelle/TCwindgen).
+R's compatibility to easily use fast `Cpp` code ([Rcpp](https://github.com/RcppCore/Rcpp)) and spatial processing (e.g. [terra](https://github.com/rspatial/terra)) makes it an attractive open source environment to study [tropical cyclones](https://en.wikipedia.org/wiki/Tropical_cyclone), also known as TCs, hurricanes and typhoons. This package estimates TC vortex wind and pressure fields using parametric equations originally coded up in python by [TCRM](https://github.com/GeoscienceAustralia/tcrm) and in Cuda Cpp by [TCwindgen](https://github.com/CyprienBosserelle/TCwindgen).
 
 TC wind fields can be computed using three model inputs of the: 1) [TC Track](#input1), 2) [Model Parameters](#input2) and 3) [Model Spatial Domain](#input3). The TCHazaRds package can be used with other visualization and spatial analysis packages to analyse the impacts of TCs.
 
@@ -48,7 +48,7 @@ TCi$thetaFm = 90-returnBearing(TCi) #direction of the heading of the TC (Cartesi
 
 ```
 
-In the above code chunk a simple track segment is defined, but historical TC tracks, e.g. from IBTRACs, can provide the input into the model. A few tracks are provided with the package, below TC Yasi is read in.
+In the above code chunk a simple track segment is defined, but historical TC tracks, e.g. from Best Track Archive for Climate Stewardship (IBTrACS), can provide the input into the model. A few tracks are provided with the package, below TC Yasi is read in.
 
 ```{r}
 TC <- vect(system.file("extdata/YASI/YASI.shp", package="TCHazaRds"))
@@ -90,7 +90,7 @@ GEO_land = land_geometry(land_r,inland_proximity)
 
 ```
 
-## Output Wind and Wave Feild 
+## Output Wind and Wave Field 
 Now that we have the three inputs (tracks, parameters and model output geometry) we can compute and plot the spatial wind hazard. See [Making maps in R](https://r.geocompx.org/adv-map.html) for plotting method. Ocean Wave parameters can be returned with `returnWaves = TRUE`
 
 ```{r, out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"}
@@ -178,7 +178,7 @@ plot(HAZp,"Sw",levels=ats,col = wcol(13),range = range(ats),type="continuous",bo
 lines(TC)
 ```
 
-TC wind fields can be modelled, or tested, with observed, or constant, B (Beta) profile peakedness parameter by defining TC$B and setting betaModel = NA in paramsTable
+TC wind fields can be modelled, or tested, with observed, or constant, B (Beta) profile peakedness parameter by defining TC$B and setting `betaModel = NA` in paramsTable
 ```{r}
 TCi$B = 2.2
 paramsTableCB = paramsTable

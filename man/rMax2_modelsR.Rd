@@ -7,13 +7,13 @@
 rMax2_modelsR(rMax2Model, rMax, vMax, TClats)
 }
 \arguments{
-\item{rMax2Model}{TC outer radius of 17.5m/s winds model ('150km'=1,'CK22'=2)}
+\item{rMax2Model}{TC outer radius of 17.5m/s winds model 1='150km', 2=Chavas and Knaff(2022)}
 
 \item{rMax}{Numeric. A vector of radius of maximum winds (km).}
 
 \item{vMax}{Numeric. A vector of maximum wind speeds (m/s).}
 
-\item{TClats}{Numeric. A vector of latitudes of tropical cyclone cwntre in degrees.}
+\item{TClats}{Numeric. A vector of latitudes of tropical cyclone centre in degrees.}
 }
 \value{
 A vector of predicted rMax175ms values (in km).

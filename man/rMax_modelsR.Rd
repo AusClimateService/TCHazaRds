@@ -12,11 +12,12 @@ rMax_modelsR(
   R175ms = 150,
   dPdt = NULL,
   vFms = NULL,
-  rho = 1.15
+  rho = 1.15,
+  vMax = NULL
 )
 }
 \arguments{
-\item{rMaxModel}{0=Powell et.al.(2005),1=McInnes et.al.(2014),2=Willoughby & Rahn (2004),  3=Vickery & Wadhera (2008), 4=Takagi & Wu (2016), 5 = Chavas & Knaff (2022)}
+\item{rMaxModel}{0=Powell et.al.(2005),1=McInnes et.al.(2014),2=Willoughby & Rahn (2004),  3=Vickery & Wadhera (2008), 4=Takagi & Wu (2016), 5 = Chavas & Knaff (2022).}
 
 \item{TClats}{Tropical cyclone central latitude (nautical degrees)}
 
@@ -31,6 +32,8 @@ rMax_modelsR(
 \item{vFms}{Forward speed of the storm m/s}
 
 \item{rho}{density of air}
+
+\item{vMax}{maximum wind speed m/s. see \code{vMax_modelsR}}
 }
 \value{
 radius of maximum winds (km)

@@ -7,7 +7,7 @@
 beta_modelsR(betaModel, vMax, rMax, cPs, eP, vFms, TClats, dPdt, rho = 1.15)
 }
 \arguments{
-\item{betaModel}{0=Holland (2008),1=Powell (2005),2=Willoughby & Rahn (2004),3=Vickery & Wadhera (2008),4=Hubbert (1991)}
+\item{betaModel}{0=Powell (2005), 1=Holland (2008),2=Willoughby & Rahn (2004),3=Vickery & Wadhera (2008),4=Hubbert (1991)}
 
 \item{vMax}{maximum wind speed m/s. see \code{vMax_modelsR}}
 

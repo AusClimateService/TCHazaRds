@@ -168,11 +168,11 @@ update_Track <- function(outdate = NULL, indate, TClons, TClats, vFms, thetaFms,
   TRACK <- list()
   TRACK$eP <- eP
   TRACK$rho <- rho
-  if(is.na(rMaxModel) & is.null(RMAX)) stop("If params rMaxModel value is NA, please provide TC$RMAX")
-  if(is.na(vMaxModel) & is.null(VMAX)) stop("If params vMaxModel value is NA, please provide TC$VMAX")
-  if(is.na(betaModel) & is.null(B)) stop("If params betaModel value is NA, please provide TC$B")
-  if(is.na(rMax2Model) & is.null(RMAX2)) stop("If params rmax2Model value is NA, please provide TC$RMAX2")
-  
+  if(is.na(rMaxModel) & all(is.na(RMAX))) stop("If params rMaxModel value is NA, please provide non-NA TC$RMAX")
+  if(is.na(vMaxModel) & all(is.na(VMAX))) stop("If params vMaxModel value is NA, please provide non-NA TC$VMAX")
+  if(is.na(betaModel) & all(is.na(B))) stop("If params betaModel value is NA, please provide non-NA TC$B")
+  if(is.na(rMax2Model) & all(is.na(RMAX2))) stop("If params rmax2Model value is NA, please provide non-NA TC$RMAX2")
+  if(!is.na(rMaxModel)) if(rMaxModel == 5 & all(is.na(RMAX2))) stop("If params rmaxModel value is 5 (Chavas & Knaff 2022), please provide non-NA TC$RMAX2")
 
   odatei <- as.numeric(indate)
   indatei <- as.numeric(indate)
@@ -214,8 +214,17 @@ update_Track <- function(outdate = NULL, indate, TClons, TClats, vFms, thetaFms,
     TRACK$rMax <- rMaxModel # use the input values
   }
   if (length(rMaxModel) == 1) {
-    if(!is.na(rMaxModel)) if(rMaxModel <= 4) TRACK$rMax <- rMax_modelsR(rMaxModel = rMaxModel, TClats = TRACK$TClats, cPs = TRACK$cPs, eP = eP,
+    if(!is.na(rMaxModel)){
+      
+      if(rMaxModel <= 4) TRACK$rMax <- rMax_modelsR(rMaxModel = rMaxModel, TClats = TRACK$TClats, cPs = TRACK$cPs, eP = eP,
                                dPdt = TRACK$dPdt, vFms = TRACK$vFms, rho = rho)
+      # Chavas & Knaff (2022) is untested in this software
+      if(rMaxModel == 5) { 
+        TRACK$rMax2 = RMAX2
+        TRACK$rMax <- rMax_modelsR(rMaxModel = rMaxModel, TClats = TRACK$TClats, cPs = TRACK$cPs, eP = eP,
+                                                  dPdt = TRACK$dPdt, vFms = TRACK$vFms, rho = rho, R175ms = TRACK$rMax2,vMax = TRACK$vMax)
+      }
+    }
     if(is.na(rMaxModel)) {
       if (is.null(outdate[1])) TRACK$rMax <- RMAX[s]
       if (!is.null(outdate[1])) TRACK$rMax <- stats::approx(indatei, RMAX, outdatei)$y[s]
@@ -264,7 +273,10 @@ update_Track <- function(outdate = NULL, indate, TClons, TClats, vFms, thetaFms,
       if (is.null(outdate[1])) TRACK$rMax2 <- RMAX2[s]
       if (!is.null(outdate[1])) TRACK$rMax2 <- stats::approx(indatei, RMAX2, outdatei)$y[s]
     }
+    
   }
+  
+
   return(TRACK)
 }
 
@@ -917,7 +929,7 @@ returnBearing <- function(x){
 
 #' Compute the  Tropical Cyclone Radius of Maximum Winds
 #'
-#' @param rMaxModel 0=Powell et.al.(2005),1=McInnes et.al.(2014),2=Willoughby & Rahn (2004),  3=Vickery & Wadhera (2008), 4=Takagi & Wu (2016), 5 = Chavas & Knaff (2022)
+#' @param rMaxModel 0=Powell et.al.(2005),1=McInnes et.al.(2014),2=Willoughby & Rahn (2004),  3=Vickery & Wadhera (2008), 4=Takagi & Wu (2016), 5 = Chavas & Knaff (2022).
 #' @param TClats Tropical cyclone central latitude (nautical degrees)
 #' @param cPs Tropical cyclone central pressure (hPa)
 #' @param eP Background environmental pressure (hPa)
@@ -925,19 +937,20 @@ returnBearing <- function(x){
 #' @param dPdt rate of change in central pressure over time, hPa per hour from Holland 2008
 #' @param vFms Forward speed of the storm m/s
 #' @param rho  density of air
+#' @param vMax maximum wind speed m/s. see \code{vMax_modelsR}
 #'
 #' @return radius of maximum winds (km)
 #' @export
 #'
 #' @examples rMax_modelsR(0,-14,950,1013,200,0,0,1.15)
-rMax_modelsR <- function(rMaxModel, TClats, cPs, eP, R175ms = 150, dPdt = NULL, vFms = NULL, rho = 1.15) {
+rMax_modelsR <- function(rMaxModel, TClats, cPs, eP, R175ms = 150, dPdt = NULL, vFms = NULL, rho = 1.15,vMax = NULL) {
   #not in TCRM
   #0: Powell Soukup et al (2005) updated to Arthur 2021
   #1: McInnes et al 2014 (Kossin, pers. comm. October, 2010).
   #2: Willoughby & Rahn(2004), eq 7
   #3: Vickery & Wadhera (2008) eq 11
   #4: Takagi & Wu (2016)
-  #5: Chavas & Knaff (2022)
+  #5: Chavas & Knaff (2022) Has not been extensively tested!
   if(is.na(rMaxModel)) stop("rMaxModel must be a value from 0 to 5, see params file") 
   dP <- (eP - cPs)
   dP[dP < 1] <- 1
@@ -954,7 +967,7 @@ rMax_modelsR <- function(rMaxModel, TClats, cPs, eP, R175ms = 150, dPdt = NULL, 
     beta <- (1/2) * (a^2 + sqrt(a^4 + 4 * a^2 * b) + 2 * b)
     beta[beta < 0.8] <- 0.8
     beta[beta > 1.9] <- 1.9
-    vMax <- sqrt(beta * dP * 100 / (exp(1) * rho))
+    if(is.null(vMax)) vMax <- sqrt(beta * dP * 100 / (exp(1) * rho))
     rMaxs <- 51.6 * exp(-0.0223 * vMax + 0.0281 * abs(TClats))
   } else if (rMaxModel == 3) {
     # Vickery Wadhera 2008 eq 11
@@ -963,21 +976,9 @@ rMax_modelsR <- function(rMaxModel, TClats, cPs, eP, R175ms = 150, dPdt = NULL, 
     # Takagi Wu 2016 Figure 3
     rMaxs <- 0.676 * cPs - 578
   } else if (rMaxModel == 5) {
+    message("Chavas & Knaff (2022) is untested in this software")
+    if(is.null(vMax)) vMax <- sqrt(1.3 * dP * 100 / (exp(1) * rho))
     rMaxs <- predict_rmax(R175ms, vMax, TClats)
-    #x <- 0.6 * (1 - dP / 215)
-    #bs <- -4.4e-5 * dP^2 + 0.01 * dP + 0.03 * dPdt - 0.014 * abs(TClats) + 0.15 * vFms^x + 1
-    #vMax <- 0.6252 * sqrt(dP * 100)
-    #f <- 2 * 7.292e-5 * sin(abs(TClats * pi / 180))
-    #ruser_m_vec <- R175ms * 1000
-    #Muser_vec <- ruser_m_vec * 17.491 + 0.5 * abs(f) * ruser_m_vec^2
-    #halffcorruser_m_vec <- 0.5 * f * ruser_m_vec
-    #coefs.b <- 0.699
-    #coefs.c <- -0.00618
-    #coefs.f <- -0.00210
-    #MmaxMuser_predict <- coefs.b * exp(coefs.c * (vMax - 17.491) + coefs.f * (vMax - 17.491) * halffcorruser_m_vec)
-    #Mmax_predict <- MmaxMuser_predict * Muser_vec
-    #rmax_predict <- (vMax / f) * (sqrt(1 + (2 * f * Mmax_predict / (vMax^2))) - 1)
-    #rMaxs <- rmax_predict / 1000
   }
 
   return(rMaxs)
@@ -1057,7 +1058,7 @@ vMax_modelsR <- function(vMaxModel, cPs, eP, vFms = NULL, TClats = NULL, dPdt = 
 
 #' Compute the Exponential TC beta Profile-Curvature Parameter
 #'
-#' @param betaModel 0=Holland (2008),1=Powell (2005),2=Willoughby & Rahn (2004),3=Vickery & Wadhera (2008),4=Hubbert (1991)
+#' @param betaModel 0=Powell (2005), 1=Holland (2008),2=Willoughby & Rahn (2004),3=Vickery & Wadhera (2008),4=Hubbert (1991)
 #' @param vMax maximum wind speed m/s. see \code{vMax_modelsR}
 #' @param rMax radius of maximum winds (km). see \code{rMax_modelsR}
 #' @param cPs Tropical cyclone central pressure (hPa)
@@ -1360,10 +1361,10 @@ rMax175ms_solver <- function(rMax175ms_m, vMax, rmax_predict_m, TClats) {
 #' Numerically solves for the radius of 17.5 m/s winds (rMax175ms) using the 
 #' Chavas and Knaff (2022) model and `uniroot`.
 #'
-#' @param rMax2Model TC outer radius of 17.5m/s winds model ('150km'=1,'CK22'=2)
+#' @param rMax2Model TC outer radius of 17.5m/s winds model 1='150km', 2=Chavas and Knaff(2022)
 #' @param rMax Numeric. A vector of radius of maximum winds (km).
 #' @param vMax Numeric. A vector of maximum wind speeds (m/s).
-#' @param TClats Numeric. A vector of latitudes of tropical cyclone cwntre in degrees.
+#' @param TClats Numeric. A vector of latitudes of tropical cyclone centre in degrees.
 #'
 #' @return A vector of predicted rMax175ms values (in km).
 #' @examples

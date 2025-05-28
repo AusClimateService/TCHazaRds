@@ -144,7 +144,7 @@ McConochieWindFieldPi <- function(rMax, vMax, vFm, thetaFm, Rlam, V, f, surface)
 }
 
 #' @title Kepert Wind Field
-#' @description Time series vortex Wind, wind vectors. Kepert, J., 2001: The Dynamics of Boundary Layer Jets within the Tropical Cyclone Core.Part I : Linear Theory.J.Atmos.Sci., 58, 2469 - 2484
+#' @description Time series vortex Wind, wind vectors. Kepert, J., 2001: The Dynamics of Boundary Layer Jets within the Tropical Cyclone Core.Part I : Linear Theory.J.Atmospheric.Science., 58, 2469 - 2484
 #' @param rMax radius of maximum winds in km
 #' @param vMax maximum wind velocity calculation in m/s
 #' @param vFm input forward velocity of TC
