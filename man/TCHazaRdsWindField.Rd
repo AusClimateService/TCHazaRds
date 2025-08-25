@@ -4,7 +4,13 @@
 \alias{TCHazaRdsWindField}
 \title{Compute the Wind and Pressure Spatial Hazards Field Associated with TCs Single Time Step.}
 \usage{
-TCHazaRdsWindField(GEO_land, TC, paramsTable, returnWaves = FALSE)
+TCHazaRdsWindField(
+  GEO_land,
+  TC,
+  paramsTable,
+  return_vars = c("Pr", "Uw", "Vw", "Sw", "Dw", "R", "lam"),
+  returnWaves = NULL
+)
 }
 \arguments{
 \item{GEO_land}{SpatVector or dataframe hazard geometry generated with land_geometry}
@@ -13,19 +19,25 @@ TCHazaRdsWindField(GEO_land, TC, paramsTable, returnWaves = FALSE)
 
 \item{paramsTable}{Global parameters to compute TC Hazards.}
 
-\item{returnWaves}{Return ocean wave parameters (default = FALSE)}
+\item{return_vars}{character(). Variables to return. Default: core winds/pressure.
+Options: c("Pr","Uw","Vw","Sw","Dw","R","lam","Ww","Hs0","Tp0","Dp0")}
+
+\item{returnWaves}{DEPRECATED. Use return_vars including 'Hs0','Tp0','Dp0' instead}
 }
 \value{
 SpatRaster with the following attributes\tabular{lll}{
-   abbreviated attribute \tab description \tab units \cr
+   abbreviated variable \tab description \tab units \cr
    P \tab Atmospheric pressure \tab hPa \cr
    Uw \tab Meridional  wind speed \tab m/s \cr
    Vw \tab Zonal wind speed \tab m/s \cr
+   Ww \tab Vertical wind speed \tab m/s \cr
    Sw \tab Wind speed \tab m/s \cr
-   Dw \tab The direction from which wind originates \tab deg clockwise from true north. \cr
+   Dw \tab The direction from which wind originates \tab deg clockwise from true north \cr
    Hs0 \tab Deep water significant wave height \tab m \cr
    Tp0 \tab Deep water Peak wave period \tab s \cr
-   Dp0 \tab The peak direction in which wave are heading \tab deg clockwise from true north. \cr
+   Dp0 \tab The peak direction in which wave are heading \tab deg clockwise from true north \cr
+   R \tab The radial distance to the TC centre \tab km \cr
+   lam \tab The radial direction to the TC centre \tab deg \cr
 }
 }
 \description{

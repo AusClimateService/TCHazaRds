@@ -301,8 +301,31 @@ McConochieWindField <- function(rMax, vMax, vFm, thetaFm, Rlam, V, f, surface) {
 #' @param VZ array two columns velocity then vorticity
 #' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
 #' @return array with two columns for zonal and meridional wind speed vector-components.
-#' //@example KepertWindField(20,20,2,10,-1e-4,rbind(c(50,35),c(45,40)),rbind(c(20,2),c(22,3)))
+#' //@example KepertWindField(20,20,2,10,-1e-4,rbind(c(50,35),c(45,40)),rbind(c(20,2),c(22,3)),surface=1)
 KepertWindField <- function(rMax, vMax, vFm, thetaFm, f, Rlam, VZ, surface) {
     .Call(`_TCHazaRds_KepertWindField`, rMax, vMax, vFm, thetaFm, f, Rlam, VZ, surface)
+}
+
+#' @title Kepert Vertical Wind Field (u, v, Ks, w)
+#' @description As your KepertWindField but also computes vertical velocity
+#'              w(r) = (1/r) * dQ/dr where
+#'              Q(r) = r*C*Vg*(Vg + 2*vs) / ( f + Vg/r + dVg/dr ).
+#'              Derivatives use 3-point stencils with radii r - dr, r, r + dr.
+#'
+#' @param rMax radius of maximum winds in km
+#' @param vMax maximum wind velocity in m/s
+#' @param vFm forward speed of TC (m/s)
+#' @param thetaFm forward direction of TC (deg)
+#' @param f single coriolis parameter (1/s)
+#' @param Rlam two columns: [radius_km, azimuth_deg] from grid point to TC centre
+#' @param VZ two columns: [Vi (m/s), Zi (1/s)]
+#' @param surface equals 1 for surface winds (reduced from gradient level),
+#'        otherwise gradient winds.
+#' @param dr_m finite-difference step in metres (default 10 m)
+#'
+#' @return NumericMatrix with columns:
+#'         1) u (m/s), 2) v (m/s), 3) Ks (-), 4) w (m/s)
+KepertVerticalWindField <- function(rMax, vMax, vFm, thetaFm, f, Rlam, VZ, surface, dr_m = 10.0) {
+    .Call(`_TCHazaRds_KepertVerticalWindField`, rMax, vMax, vFm, thetaFm, f, Rlam, VZ, surface, dr_m)
 }
 

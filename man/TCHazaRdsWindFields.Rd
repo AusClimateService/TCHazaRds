@@ -11,7 +11,8 @@ TCHazaRdsWindFields(
   paramsTable,
   outfile = NULL,
   overwrite = FALSE,
-  returnWaves = FALSE
+  returnWaves = NULL,
+  return_vars = c("Pr", "Uw", "Vw", "Sw", "Dw")
 )
 }
 \arguments{
@@ -27,19 +28,25 @@ TCHazaRdsWindFields(
 
 \item{overwrite}{TRUE/FALSE, option to overwrite outfile}
 
-\item{returnWaves}{Return ocean wave parameters (default = FALSE)}
+\item{returnWaves}{DEPRECATED. Use return_vars including 'Hs0','Tp0','Dp0' instead}
+
+\item{return_vars}{character(). Variables to return. Default: core winds/pressure.
+Options: c("Pr","Uw","Vw","Sw","Dw","R","lam","Ww","Hs0","Tp0","Dp0")}
 }
 \value{
 SpatRasterDataset with the following attributes.\tabular{lll}{
-   abbreviated attribute \tab description \tab units \cr
+   abbreviated variable \tab description \tab units \cr
    P \tab Atmospheric pressure \tab hPa \cr
    Uw \tab Meridional  wind speed \tab m/s \cr
    Vw \tab Zonal wind speed \tab m/s \cr
+   Ww \tab Vertical wind speed \tab m/s \cr
    Sw \tab Wind speed \tab m/s \cr
    Dw \tab The direction from which wind originates \tab deg clockwise from true north \cr
    Hs0 \tab Deep water significant wave height \tab m \cr
    Tp0 \tab Deep water Peak wave period \tab s \cr
-   Dp0 \tab The peak direction in which wave are heading \tab deg clockwise from true north. \cr
+   Dp0 \tab The peak direction in which wave are heading \tab deg clockwise from true north \cr
+   R \tab The radial distance to the TC centre \tab km \cr
+   lam \tab The radial direction to the TC centre \tab deg \cr
 }
 }
 \description{

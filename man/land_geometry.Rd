@@ -19,10 +19,12 @@ SpatVector with attributes or SpatRaster\tabular{lll}{
    dem \tab Digital Elevation Model \tab m \cr
    lat \tab Latitude \tab degs \cr
    lon \tab Longitude \tab degs \cr
-   slope \tab slope of terrain \tab - \cr
-   aspect \tab DEM aspect \tab - \cr
+   slope \tab slope of terrain \tab radians \cr
+   aspect \tab DEM aspect \tab radians \cr
    inlandD \tab distance inland from coast \tab m \cr
    f \tab Coriolis parameter \tab hz \cr
+   dzdx \tab land gradient in x direction \tab radians \cr
+   dzdy \tab land gradient in y direction \tab radians \cr
 }
 }
 \description{

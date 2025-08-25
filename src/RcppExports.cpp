@@ -356,6 +356,25 @@ BEGIN_RCPP
     return rcpp_result_gen;
 END_RCPP
 }
+// KepertVerticalWindField
+NumericMatrix KepertVerticalWindField(float rMax, float vMax, float vFm, float thetaFm, float f, NumericMatrix Rlam, NumericMatrix VZ, float surface, double dr_m);
+RcppExport SEXP _TCHazaRds_KepertVerticalWindField(SEXP rMaxSEXP, SEXP vMaxSEXP, SEXP vFmSEXP, SEXP thetaFmSEXP, SEXP fSEXP, SEXP RlamSEXP, SEXP VZSEXP, SEXP surfaceSEXP, SEXP dr_mSEXP) {
+BEGIN_RCPP
+    Rcpp::RObject rcpp_result_gen;
+    Rcpp::RNGScope rcpp_rngScope_gen;
+    Rcpp::traits::input_parameter< float >::type rMax(rMaxSEXP);
+    Rcpp::traits::input_parameter< float >::type vMax(vMaxSEXP);
+    Rcpp::traits::input_parameter< float >::type vFm(vFmSEXP);
+    Rcpp::traits::input_parameter< float >::type thetaFm(thetaFmSEXP);
+    Rcpp::traits::input_parameter< float >::type f(fSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type Rlam(RlamSEXP);
+    Rcpp::traits::input_parameter< NumericMatrix >::type VZ(VZSEXP);
+    Rcpp::traits::input_parameter< float >::type surface(surfaceSEXP);
+    Rcpp::traits::input_parameter< double >::type dr_m(dr_mSEXP);
+    rcpp_result_gen = Rcpp::wrap(KepertVerticalWindField(rMax, vMax, vFm, thetaFm, f, Rlam, VZ, surface, dr_m));
+    return rcpp_result_gen;
+END_RCPP
+}
 
 static const R_CallMethodDef CallEntries[] = {
     {"_TCHazaRds_RdistPi", (DL_FUNC) &_TCHazaRds_RdistPi, 4},
@@ -379,6 +398,7 @@ static const R_CallMethodDef CallEntries[] = {
     {"_TCHazaRds_HubbertWindField", (DL_FUNC) &_TCHazaRds_HubbertWindField, 7},
     {"_TCHazaRds_McConochieWindField", (DL_FUNC) &_TCHazaRds_McConochieWindField, 8},
     {"_TCHazaRds_KepertWindField", (DL_FUNC) &_TCHazaRds_KepertWindField, 8},
+    {"_TCHazaRds_KepertVerticalWindField", (DL_FUNC) &_TCHazaRds_KepertVerticalWindField, 9},
     {NULL, NULL, 0}
 };
 

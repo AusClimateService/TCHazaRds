@@ -1361,7 +1361,7 @@ NumericMatrix McConochieWindField(float rMax, float vMax, float vFm, float theta
 //' @param VZ array two columns velocity then vorticity
 //' @param surface equals one if winds are reduced from the gradient level to the surface, otherwise gradient winds.
 //' @return array with two columns for zonal and meridional wind speed vector-components.
-//' //@example KepertWindField(20,20,2,10,-1e-4,rbind(c(50,35),c(45,40)),rbind(c(20,2),c(22,3)))
+//' //@example KepertWindField(20,20,2,10,-1e-4,rbind(c(50,35),c(45,40)),rbind(c(20,2),c(22,3)),surface=1)
 // [[Rcpp::export]]
 NumericMatrix KepertWindField(float rMax, float vMax, float vFm, float thetaFm, float f, NumericMatrix Rlam, NumericMatrix VZ,float surface)
 {
@@ -1385,7 +1385,7 @@ NumericMatrix KepertWindField(float rMax, float vMax, float vFm, float thetaFm, 
   
   NumericVector V = VZ( _ , 0 );
   int n = V.size();
-  NumericMatrix UwVw(n,2);
+  NumericMatrix UwVwKs(n,3);
 
   float Ri, Vi, Zi,fs;
   float lami;
@@ -1505,9 +1505,226 @@ NumericMatrix KepertWindField(float rMax, float vMax, float vFm, float thetaFm, 
     //  phi = pi - phi;
     //}
     float square_term = sqrtf(usf*usf + vsf *vsf);
-    UwVw(i,0) = square_term * sinf(phi - lami)*Ks;
-    UwVw(i,1) = square_term * cosf(phi - lami)*Ks;
-
+    UwVwKs(i,0) = square_term * sinf(phi - lami)*Ks;
+    UwVwKs(i,1) = square_term * cosf(phi - lami)*Ks;
+    UwVwKs(i,2) = Ks;
   }
-  return UwVw;
+  return UwVwKs;
+}
+
+//' @title Kepert Vertical Wind Field (u, v, Ks, w)
+//' @description As your KepertWindField but also computes vertical velocity
+//'              w(r) = (1/r) * dQ/dr where
+//'              Q(r) = r*C*Vg*(Vg + 2*vs) / ( f + Vg/r + dVg/dr ).
+//'              Derivatives use 3-point stencils with radii r - dr, r, r + dr.
+//'
+//' @param rMax radius of maximum winds in km
+//' @param vMax maximum wind velocity in m/s
+//' @param vFm forward speed of TC (m/s)
+//' @param thetaFm forward direction of TC (deg)
+//' @param f single coriolis parameter (1/s)
+//' @param Rlam two columns: [radius_km, azimuth_deg] from grid point to TC centre
+//' @param VZ two columns: [Vi (m/s), Zi (1/s)]
+//' @param surface equals 1 for surface winds (reduced from gradient level),
+//'        otherwise gradient winds.
+//' @param dr_m finite-difference step in metres (default 10 m)
+//'
+//' @return NumericMatrix with columns:
+//'         1) u (m/s), 2) v (m/s), 3) Ks (-), 4) w (m/s)
+// [[Rcpp::export]]
+NumericMatrix KepertVerticalWindField(
+     float rMax, float vMax, float vFm, float thetaFm, float f,
+     NumericMatrix Rlam, NumericMatrix VZ, float surface,
+     double dr_m = 10.0)
+ {
+   const int n = VZ.nrow();
+   NumericMatrix Out(n, 4);
+   
+   // constants (kept exactly as in your code)
+   const double pi = 3.14159265358979323846;
+   const double piOn180 = pi / 180.0;
+   const double K  = 50.0;     // eddy diffusivity (m^2/s)
+   const double Cd = 0.002;    // drag coeff (const)
+   const double tiny = 1e-6;
+   
+   const double rMax_m = rMax * 1000.0;
+   const double thetaFm_rad = thetaFm * piOn180;
+   
+   for (int i = 0; i < n; ++i) {
+     
+     // ------------------------------
+     // Inputs for this grid point
+     // ------------------------------
+     const double lami_deg = Rlam(i,1);
+     const double lami     = lami_deg * piOn180;
+     const double fs       = f / std::abs(f);
+     
+     const double Vi = VZ(i,0);    // gradient wind (background) [m/s]
+     const double Zi = VZ(i,1);    // vorticity [1/s]
+     
+     // Base radius (metres)
+     const double Ri0_m = Rlam(i,0) * 1000.0;
+     
+     // Always compute u,v,Ks at the base radius (Ri0_m)
+     // Then compute w using three radii (Ri0_m - dr, Ri0_m, Ri0_m + dr).
+     // If Ri0_m < dr_m, we can't do a central derivative => w = NA.
+     
+     // ------------------------------
+     // Helper arrays for 3 radii
+     // ------------------------------
+     double Rm[3];
+     Rm[0] = Ri0_m - dr_m;   // r - dr
+     Rm[1] = Ri0_m;          // r
+     Rm[2] = Ri0_m + dr_m;   // r + dr
+     
+     // Store per-radius values we need for w:
+     double vs_arr[3];   // surface wind speed magnitude
+     double Vg_arr[3];   // gradient wind magnitude
+     // double Ks_arr[3];   // reduction factor
+     
+     // Also track base u, v at k=1 (r)
+     double u_base = NA_REAL, v_base = NA_REAL, Ks_base = NA_REAL;
+     
+     // -----------------------------------------
+     // Loop k over three radii: r-dr, r, r+dr
+     // (Vi, Zi and lami held fixed as in your R code)
+     // -----------------------------------------
+     for (int k = 0; k < 3; ++k) {
+       
+       // If radius <= 0, just mirror a tiny radius to avoid singularities.
+       double Ri_m = Rm[k];
+       if (Ri_m <= 0.0) Ri_m = tiny;
+       
+       // Forward motion scaling (same as your code)
+       double Umod = vFm;
+       if ((vFm > 0.0) && ((vMax / vFm) < 5.0)) {
+         Umod = vFm * std::abs(1.25 * (1.0 - (vFm / vMax)));
+       }
+       
+       double Vt = Umod;
+       if (Ri_m >= (2.0 * rMax_m)) {
+         const double x = (Ri_m / (2.0 * rMax_m)) - 1.0;
+         Vt = Umod * std::exp(-x * x);
+       }
+       
+       // Boundary layer parameters
+       const double al   = ((2.0 * Vi / Ri_m) + f) / (2.0 * K);
+       const double be   = (f + Zi) / (2.0 * K);
+       const double gam  = Vi / (2.0 * K * Ri_m);
+       const double albe = std::sqrt(al / be);
+       
+       const double chi = std::abs((Cd / K) * Vi / std::sqrt(std::sqrt(al * be)));
+       const double eta = std::abs((Cd / K) * Vi / std::sqrt(std::sqrt(al * be) + std::abs(gam)));
+       const double psi = std::abs((Cd / K) * Vi / std::sqrt(std::abs(std::sqrt(al * be) - std::abs(gam))));
+       
+       double Ks = ((chi*chi) + 2.0*chi + 2.0) / (2.0*chi*chi + 3.0*chi + 2.0); // Eq. 30
+       if (surface < 1.0) Ks = 1.0;
+       
+       // Symmetric component
+       const double A0r = -(chi * (1.0 + 0.0 * (1.0 + chi)) * Vi) / (2.0*chi*chi + 3.0*chi + 2.0);
+       const double A0i = -(chi * (1.0 + 1.0 * (1.0 + chi)) * Vi) / (2.0*chi*chi + 3.0*chi + 2.0);
+       const double u0s = A0r * albe * fs;
+       const double v0s = A0i;
+       
+       // First asymmetric
+       double Amr = -(psi * (1.0 + 2.0*albe + (1.0+0.0)*(1.0+albe) * eta) * Vt) /
+         (albe * ((2.0 + 0.0) * (1.0 + eta*psi) + 3.0*psi + 0.0 * 3.0 * eta));
+       double Ami = -(psi * (1.0 + 2.0*albe + (1.0+1.0)*(1.0+albe) * eta) * Vt) /
+         (albe * ((2.0 + 2.0) * (1.0 + eta*psi) + 3.0*psi + 3.0 * eta));
+       
+       if (std::abs(gam) > std::sqrt(al*be)) {
+         Amr = -(psi * (1.0 + 2.0*albe + (1.0+0.0)*(1.0+albe) * eta) * Vt) /
+           (albe * ((2.0 - 0.0) + 3.0*(eta + psi) + (2.0 + 0.0) * eta * psi));
+         Ami = -(psi * (1.0 + 2.0*albe + (1.0+1.0)*(1.0+albe) * eta) * Vt) /
+           (albe * ((2.0 - 2.0) + 3.0*(eta + psi) + (2.0 + 2.0) * eta * psi));
+       }
+       
+       const double lami2 = (lami - thetaFm_rad);
+       const double ums = (Amr * std::cos(lami2 * fs)) * albe;
+       const double vms = (Ami * (-std::sin(lami2 * fs))) * fs;
+       
+       // Second asymmetric
+       double Apr = -(eta * (1.0 - 2.0*albe + (1.0 + 0.0) * (1.0 - albe) * psi) * Vt) /
+         (albe * ((2.0 + 0.0) * (1.0 + eta*psi) + 3.0*eta + 0.0 * 3.0 * psi));
+       double Api = -(eta * (1.0 - 2.0*albe + (1.0 + 1.0) * (1.0 - albe) * psi) * Vt) /
+         (albe * ((2.0 + 2.0) * (1.0 + eta*psi) + 3.0*eta + 3.0 * psi));
+       
+       if (std::abs(gam) > std::sqrt(al*be)) {
+         Apr = -(eta * (1.0 - 2.0*albe + (1.0 - 0.0) * (1.0 - albe) * psi) * Vt) /
+           (albe * (2.0 + 0.0 + 3.0*(eta + psi) + (2.0 - 0.0) * eta * psi));
+         Api = -(eta * (1.0 - 2.0*albe + (1.0 - 1.0) * (1.0 - albe) * psi) * Vt) /
+           (albe * (2.0 + 2.0 + 3.0*(eta + psi) + (2.0 - 2.0) * eta * psi));
+       }
+       
+       const double ups = (Apr * std::cos(lami2 * fs)) * albe;
+       const double vps = (Api * ( std::sin(lami2 * fs))) * fs;
+       
+       // Total surface wind in moving frame
+       const double us = u0s + ups + ums;
+       const double vs = v0s + vps + vms + Vi;
+       
+       // Transform back to earth-relative
+       const double usf = us + Vt * std::cos(lami2);
+       const double vsf = vs - Vt * std::sin(lami2);
+       const double phi = std::atan2(usf, vsf);
+       const double spd = std::sqrt(usf*usf + vsf*vsf);
+       
+       // u,v at *surface* including reduction Ks
+       const double u_sfc = spd * std::sin(phi - lami) * Ks;
+       const double v_sfc = spd * std::cos(phi - lami) * Ks;
+       
+       // Unit tangential vector at angle lami (CCW from +x): e_t = (-sin lami, cos lami)
+       const double e_t_x = -std::sin(lami);
+       const double e_t_y =  std::cos(lami);
+       
+       // Surface u,v we just computed already include Ks
+       const double vtan_sfc = u_sfc * e_t_x + v_sfc * e_t_y;  // v(0): surface tangential wind
+       const double vtan_g   = vtan_sfc / Ks;                  // V: gradient tangential wind
+       
+       // Save fields for w
+       vs_arr[k] = vtan_sfc;   // v(0)
+       Vg_arr[k] = vtan_g;     // V
+       
+       // Keep base u,v,Ks for output (k==1 corresponds to radius r)
+       if (k == 1) {
+         u_base = u_sfc;
+         v_base = v_sfc;
+         Ks_base = Ks;
+       }
+     } // end k loop
+     
+     // Write base u,v,Ks
+     Out(i,0) = u_base;
+     Out(i,1) = v_base;
+     Out(i,2) = Ks_base;
+     
+     // Compute w only if we can do central differences
+     if (Ri0_m < dr_m) {
+       Out(i,3) = NA_REAL;
+       continue;
+     }
+     
+     // dVg/dr at r (central), and one-sided at r±dr using the 3 available points
+     const double dVdr_minus = (Vg_arr[1] - Vg_arr[0]) / dr_m;        // at r - dr (forward 1st order)
+     //const double dVdr_0     = (Vg_arr[2] - Vg_arr[0]) / (2.0*dr_m);  // at r (central)
+     const double dVdr_plus  = (Vg_arr[2] - Vg_arr[1]) / dr_m;        // at r + dr (backward 1st order)
+     
+     // Build Q at r - dr and r + dr
+     auto Q_of = [&](double r_m, double Vg, double vs, double dVdr) {
+       double denom = f + Vg / r_m + dVdr;
+       if (std::abs(denom) < tiny) denom = tiny * (denom >= 0 ? 1.0 : -1.0);
+       return r_m * Cd * Vg * (Vg + 2.0 * vs) / denom;
+     };
+     
+     const double Q_minus = Q_of(Rm[0], Vg_arr[0], vs_arr[0], dVdr_minus);
+     const double Q_plus  = Q_of(Rm[2], Vg_arr[2], vs_arr[2], dVdr_plus);
+     
+     // dQ/dr at r (central 2nd order with three points)
+     const double dQdr = (Q_plus - Q_minus) / (2.0 * dr_m);
+     
+     // Vertical velocity: w = (1/r) * dQ/dr (upward positive)
+     Out(i,3) = -dQdr / Ri0_m;
+   }
+   
+   return Out;
 }

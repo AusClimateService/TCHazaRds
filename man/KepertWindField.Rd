@@ -25,7 +25,7 @@ KepertWindField(rMax, vMax, vFm, thetaFm, f, Rlam, VZ, surface)
 }
 \value{
 array with two columns for zonal and meridional wind speed vector-components.
-//@example KepertWindField(20,20,2,10,-1e-4,rbind(c(50,35),c(45,40)),rbind(c(20,2),c(22,3)))
+//@example KepertWindField(20,20,2,10,-1e-4,rbind(c(50,35),c(45,40)),rbind(c(20,2),c(22,3)),surface=1)
 }
 \description{
 Grid point vortex Wind field, wind vectors. Kepert, J., 2001: The Dynamics of Boundary Layer Jets within the Tropical Cyclone Core.Part I : Linear Theory.J.Atmos.Sci., 58, 2469 - 2484
