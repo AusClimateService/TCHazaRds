@@ -151,7 +151,8 @@ land_geometry = function(dem,inland_proximity,returnpoints=FALSE){
 #'                    B = TCi$B,
 #'                    RMAX2 = TCi$RMAX2
 #'                    )
-#' # 'observed' along tack parameters are calculated (#Model = NA)                   
+#' # 'observed' along tack parameters are calculated (#Model = NA)  
+#'                  
 #' TCil = update_Track(outdate = outdate,
 #'                    indate = strptime(TCi$ISO_TIME,"%Y-%m-%d %H:%M:%S", tz = "UTC"),
 #'                    TClons = TCi$LON,
@@ -312,7 +313,9 @@ TCvectInterp = function(outdate = NULL, TC, paramsTable) {
   # Extract and organize the parameters from the paramsTable
   gt = terra::geomtype(TC)
   if(gt == "points") TC = TCpoints2lines(TC) #convert TC points to lines
-  
+  for (nm in c("RMAX","VMAX","B","RMAX2")) {
+   if (!(nm %in% names(TC))) TC[[nm]] <- NA_real_
+  }
   if(is.null(TC$LAT[1])){
     gg = terra::geom(TC)
     gg = gg[seq(1,2*length(TC),2),]
@@ -424,7 +427,11 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
 
   # Convert ISO_TIME to POSIX format
   indate <- strptime(TC$ISO_TIME, "%Y-%m-%d %H:%M:%S", tz = "UTC")
-
+  
+  for (nm in c("RMAX","VMAX","B","RMAX2")) {
+    if (!(nm %in% names(TC))) TC[[nm]] <- NA_real_
+  }
+  
   # Reformat and interpolate the track if outdate is provided
   TRACK <- update_Track(outdate = outdate, indate = indate, TClons = TC$LON, TClats = TC$LAT,
                         vFms = TC$STORM_SPD, thetaFms = TC$thetaFm, cPs = TC$PRES,
@@ -456,7 +463,7 @@ TCHazaRdsWindTimeSereies <- function(outdate = NULL, GEO_land = NULL, TC, params
     VZ <- with(TRACK, DoubleHollandWindProfilePi(f = fs, vMax = vMax, rMax = rMax, rMax2 = rMax2, dP = dPs, rho = rho, beta = beta, R = R, cP = cPs))
   if (params$windProfileModel == 4)
     VZ <- with(TRACK, JelesnianskiWindProfilePi(f = fs, vMax = vMax, rMax = rMax, R = R))
-
+  VZ[is.na(VZ)] = 1e-2
   V <- VZ[, 1]
 
   # Calculate wind vortex model
@@ -620,7 +627,9 @@ TCHazaRdsWindField <- function(GEO_land, TC, paramsTable,return_vars = c("Pr","U
       return_vars <- unique(c(return_vars, "Hs0", "Tp0", "Dp0"))
     }
   }
-  
+  for (nm in c("RMAX","VMAX","B","RMAX2")) {
+    if (!(nm %in% names(TC))) TC[[nm]] <- NA_real_
+  }
   returnWaves        <- any(c("Hs0","Tp0","Dp0") %in% return_vars)
   returnVerticalWind <- any(c("Ww") %in% return_vars)
   
@@ -674,7 +683,7 @@ TCHazaRdsWindField <- function(GEO_land, TC, paramsTable,return_vars = c("Pr","U
   } else if (params$windProfileModel == 4) {
     VZ <- with(TRACK, JelesnianskiWindProfile(f = f, vMax = vMax, rMax = rMax, R = R))
   }
-
+  VZ[is.na(VZ)] = 1e-2
   V <- VZ[, 1]
 
   # Calculate wind vortex field based on the selected model
@@ -925,6 +934,10 @@ TCHazaRdsWindFields <- function(outdate = NULL, GEO_land, TC, paramsTable,
   params <- data.frame(t(paramsTable$value))
   colnames(params) <- paramsTable$param
   
+  for (nm in c("RMAX","VMAX","B","RMAX2")) {
+    if (!(nm %in% names(TC))) TC[[nm]] <- NA_real_
+  }
+  stopifnot(all(c("LON","LAT","PRES","STORM_SPD","thetaFm") %in% names(TC)))
   ## ---- Deprecation shim for returnWaves ----
   if (!is.null(returnWaves)) {
     warning("Argument 'returnWaves' is deprecated and will be removed in a future release. ",
@@ -1368,9 +1381,16 @@ TCHazaRdsWindProfile = function(GEO_land,TC,paramsTable){
   colnames(params) <- paramsTable$param
   params <- data.frame(params)
   #SpatVector can't "hold" POSIX class.
+  for (nm in c("RMAX","VMAX","B","RMAX2")) {
+    if (!(nm %in% names(TC))) TC[[nm]] <- NA_real_
+  }
   if(methods::is(TC,"SpatVector")) {
     indate=strptime(TC$ISO_TIME,"%Y-%m-%d %H:%M:%S",tz = "UTC")
     #reformat
+    for (nm in c("RMAX","VMAX","B","RMAX2")) {
+      if (!(nm %in% names(TC))) TC[[nm]] <- NA_real_
+    }
+    
     TRACK = update_Track(outdate=NULL,indate=indate,TClons=TC$LON,TClats=TC$LAT,vFms=TC$STORM_SPD,thetaFms=TC$thetaFm,cPs=TC$PRES,
                          rMaxModel=params$rMaxModel,vMaxModel=params$vMaxModel,betaModel=params$betaModel,rMax2Model=params$rMax2Model,eP = params$eP,rho = params$rhoa,
                          RMAX = TC$RMAX,VMAX = TC$VMAX,B = TC$B, RMAX2 = TC$RMAX2)

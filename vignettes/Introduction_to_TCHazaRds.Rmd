@@ -119,7 +119,8 @@ if (.Platform$OS.type == "windows"){
 The hazard can be also calculated for the entire track too (by adding a `s` to the end of `TCHazaRdsWindField` to make it plural), and then the maximum wind speed at each grid cell can be plotted.
 
 ```{r, out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"}
-HAZ = TCHazaRdsWindFields(GEO_land=GEO_land,TC=TC,paramsTable=paramsTable)
+TC = crop(TC,as.polygons(ext(GEO_land)))
+HAZ = TCHazaRdsWindFields(GEO_land=GEO_land,TC=TC,paramsTable=paramsTable,returnWaves = TRUE)
 sp::spplot(max(HAZ$Sw),at=ats,sp.layout = TC_sp)
 ```
 

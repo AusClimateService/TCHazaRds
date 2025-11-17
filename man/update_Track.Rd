@@ -99,7 +99,8 @@ TCil = update_Track(outdate = outdate,
                    B = TCi$B,
                    RMAX2 = TCi$RMAX2
                    )
-# 'observed' along tack parameters are calculated (#Model = NA)                   
+# 'observed' along tack parameters are calculated (#Model = NA)  
+                 
 TCil = update_Track(outdate = outdate,
                    indate = strptime(TCi$ISO_TIME,"\%Y-\%m-\%d \%H:\%M:\%S", tz = "UTC"),
                    TClons = TCi$LON,
