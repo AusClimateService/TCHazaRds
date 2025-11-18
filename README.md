@@ -2,6 +2,8 @@
 
 [![CRAN
 status](https://www.r-pkg.org/badges/version/TCHazaRds)](https://cran.r-project.org/package=TCHazaRds)
+[![Ask DeepWiki](https://deepwiki.com/badge.svg)](https://deepwiki.com/AusClimateService/TCHazaRds)
+[![](https://cranlogs.r-pkg.org/badges/grand-total/TCHazaRds)](https://cran.r-project.org/package=TCHazaRds)
 
 <img align="right" width="250" src="TCHazaRd_logo.png">
 
