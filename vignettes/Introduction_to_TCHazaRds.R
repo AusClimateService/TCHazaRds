@@ -70,7 +70,8 @@ if (.Platform$OS.type == "windows"){
 }
 
 ## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------
-HAZ = TCHazaRdsWindFields(GEO_land=GEO_land,TC=TC,paramsTable=paramsTable)
+TC = crop(TC,as.polygons(ext(GEO_land)))
+HAZ = TCHazaRdsWindFields(GEO_land=GEO_land,TC=TC,paramsTable=paramsTable,returnWaves = TRUE)
 sp::spplot(max(HAZ$Sw),at=ats,sp.layout = TC_sp)
 
 ## ----out.width = '80%',fig.height=4,fig.width=6, fig.align = "center"---------

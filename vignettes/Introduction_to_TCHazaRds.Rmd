@@ -16,7 +16,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-R's compatibility to easily use fast `Cpp` code ([Rcpp](https://github.com/RcppCore/Rcpp)) and spatial processing (e.g. [terra](https://github.com/rspatial/terra)) makes it an attractive open source environment to study [tropical cyclones](https://en.wikipedia.org/wiki/Tropical_cyclone), also known as TCs, hurricanes and typhoons. This package estimates TC vortex wind and pressure fields using parametric equations originally coded up in python by [TCRM](https://github.com/GeoscienceAustralia/tcrm) and in Cuda Cpp by [TCwindgen](https://github.com/CyprienBosserelle/TCwindgen).
+R's compatibility to easily use fast `Cpp` code ([Rcpp](https://github.com/RcppCore/Rcpp)) and spatial processing (e.g. [terra](https://github.com/rspatial/terra)) makes it an attractive open source environment to study tropical cyclones, also known as TCs, hurricanes and typhoons. This package estimates TC vortex wind and pressure fields using parametric equations originally coded up in python by [TCRM](https://github.com/GeoscienceAustralia/tcrm) and in Cuda Cpp by [TCwindgen](https://github.com/CyprienBosserelle/TCwindgen).
 
 TC wind fields can be computed using three model inputs of the: 1) [TC Track](#input1), 2) [Model Parameters](#input2) and 3) [Model Spatial Domain](#input3). The TCHazaRds package can be used with other visualization and spatial analysis packages to analyse the impacts of TCs.
 

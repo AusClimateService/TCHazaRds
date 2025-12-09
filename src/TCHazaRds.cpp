@@ -750,10 +750,10 @@ NumericMatrix KepertWindFieldPi(NumericVector rMax, NumericVector vMax, NumericV
 		//ums = (Amr * expf(-0.0f * lami * fs)) * albe;
 		//vms = (Ami * expf(-1.0f * lami * fs)) * fs;
 		//DEV branch is different to MAIN branch of TCRM for the following lines
-		//ums = (Amr * (cosf(-(lami-thetaFmi) * fs) + 0.0f * sinf(-(lami-thetaFmi) * fs))) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
+		//ums = (Amr * (cosf(-(lami-thetaFmi) * fs) + 0.0f * sinf(-(lami-thetaFmi) * fs))) * albe;  
 		//vms = (Ami * (cosf(-(lami-thetaFmi) * fs) + 1.0f * sinf(-(lami-thetaFmi) * fs))) * fs;
 		lami2 = lami - thetaFmi;
-		ums = (Amr * (cosf(lami2 * fs) )) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
+		ums = (Amr * (cosf(lami2 * fs) )) * albe;  
 		vms = (Ami * (- 1.0f * sinf(lami2 * fs))) * fs;
 
 
@@ -769,10 +769,10 @@ NumericMatrix KepertWindFieldPi(NumericVector rMax, NumericVector vMax, NumericV
 		//Second asymmetric surface component
 		//ups = (Apr * expf(0.0f * lami * fs)) * albe;
 		//vps = (Api * expf(1.0f * lami * fs)) * fs;
-		//ups = (Apr * (cosf((lami-thetaFmi) * fs) + 0.0f * sinf((lami-thetaFmi) * fs))) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
+		//ups = (Apr * (cosf((lami-thetaFmi) * fs) + 0.0f * sinf((lami-thetaFmi) * fs))) * albe;  
 		//vps = (Api * (cosf((lami-thetaFmi) * fs) + 1.0f * sinf((lami-thetaFmi) * fs))) * albe;
 
-		ups = (Apr * (cosf(lami2 * fs))) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
+		ups = (Apr * (cosf(lami2 * fs))) * albe;  
 		vps = (Api * (1.0f * sinf(lami2 * fs))) * fs;//albe;
 
 
@@ -1470,10 +1470,10 @@ NumericMatrix KepertWindField(float rMax, float vMax, float vFm, float thetaFm, 
     lami2 = lami-thetaFm;//- (pi/2.0f-thetaFm+pi);
     //lami2 = lami-(pi/2.0f-thetaFm);//- (pi/2.0f-thetaFm+pi);
 
-    //ums = (Amr * (cosf(lami2 * fs) - 0.0f * sinf(lami2 * fs))) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
+    //ums = (Amr * (cosf(lami2 * fs) - 0.0f * sinf(lami2 * fs))) * albe;  
     //vms = (Ami * (cosf(lami2 * fs) - 1.0f * sinf(lami2 * fs))) * fs;
 
-    ums = (Amr * (cosf(lami2 * fs) )) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
+    ums = (Amr * (cosf(lami2 * fs) )) * albe;  
     vms = (Ami * (- 1.0f * sinf(lami2 * fs))) * fs;
 
     Apr = -(eta * (1.0f - 2.0f * albe + (1.0f + 0.0f) * (1.0f - albe) * psi) * Vt) / (albe * ((2.0f + 2.0f * 0.0f) * (1.0f + eta * psi) + 3.0f * eta + 3.0f * 0.0f * psi));
@@ -1488,10 +1488,10 @@ NumericMatrix KepertWindField(float rMax, float vMax, float vFm, float thetaFm, 
     //Second asymmetric surface component
     //ups = (Apr * expf(0.0f * lami * fs)) * albe;
     //vps = (Api * expf(1.0f * lami * fs)) * fs;
-    //ups = (Apr * (cosf(lami2 * fs) + 0.0f * sinf(lami2 * fs))) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
+    //ups = (Apr * (cosf(lami2 * fs) + 0.0f * sinf(lami2 * fs))) * albe;  
     //vps = (Api * (cosf(lami2 * fs) + 1.0f * sinf(lami2 * fs))) * fs;//albe;
 
-    ups = (Apr * (cosf(lami2 * fs))) * albe;  //https://en.wikipedia.org/wiki/Euler%27s_formula
+    ups = (Apr * (cosf(lami2 * fs))) * albe;  
     vps = (Api * (1.0f * sinf(lami2 * fs))) * fs;//albe;
 
     //Total surface wind in (moving coordinate system)
