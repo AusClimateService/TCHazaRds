@@ -14,9 +14,9 @@ Ocean waves, along with enhanced reduction factor modelling and parameters, are 
 ## Installation
 
 ### For Windows
-`TCHazaRds` is now on [CRAN](https://cran.r-project.org/package=TCHazaRds) and can downloaded in [R](https://www.r-project.org/) with
+`TCHazaRds` is now on [CRAN](https://CRAN.R-project.org/package=TCHazaRds) and can downloaded in [R](https://www.r-project.org/) with
 
-```
+```{r}
 install.packages("TCHazaRds",dependencies = TRUE)
 ```
 
